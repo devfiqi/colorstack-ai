@@ -4,7 +4,16 @@ ColorStack AI is an internal AI chief-of-staff system for the University of
 Minnesota ColorStack Discord server. It turns conversations into structured
 organizational context and proactive executive updates.
 
-## Architecture
+## Current status
+
+Phase 1 Discord ingestion is implemented. The Python service discovers
+accessible channels and threads, backfills message history, normalizes message
+metadata, and records live creates, edits, and deletions in local storage.
+
+AI extraction, organizational memory, reasoning, and executive reports are
+planned but not implemented.
+
+## System direction
 
 ```text
 Discord
@@ -22,49 +31,14 @@ Reasoning model
 Daily executive brief / on-demand answers
 ```
 
-### Local LLM extraction
+## Documentation
 
-A local model will handle repetitive parsing. For example:
+- [Architecture](ARCHITECTURE.md)
+- [Roadmap](ROADMAP.md)
+- [Security](SECURITY.md)
+- [Phase 1 ingestion](docs/phase-1.md)
+- [Data model](docs/data-model.md)
+- [Technical decisions](docs/decisions.md)
 
-```text
-"I'll handle food for Adobe by Friday."
-```
-
-becomes:
-
-```json
-{
-  "event": "Adobe Ideathon",
-  "task": "Handle food",
-  "owner": "speaker",
-  "deadline": "Friday"
-}
-```
-
-The extraction layer will identify:
-
-- tasks
-- owners
-- deadlines
-- decisions
-- blockers
-- event updates
-
-### Organizational memory
-
-The system will maintain the current state of each event while preserving the
-original Discord messages as source context.
-
-### Reasoning
-
-A stronger reasoning model will use the structured context to answer questions
-and generate proactive daily status reports for executive leadership.
-
-## Current status
-
-Phase 1 Discord ingestion is implemented. The service discovers accessible
-channels and threads, backfills message history, normalizes message metadata,
-and records live creates, edits, and deletions in local storage.
-
-Local LLM extraction, organizational memory, reasoning, and executive reports
-are planned but not implemented yet.
+Discord content and credentials remain local. They are excluded from Git and
+are not sent to an AI provider or external database.
