@@ -96,6 +96,7 @@ class ContextBuilder:
 
             return ExtractionContext(
                 source_message_id=source.id,
+                reply_to_message_id=source.reply_to_message_id,
                 source_author_id=source.author_id,
                 source_author_name=source.display_name or source.username,
                 channel_name=source.channel_name,

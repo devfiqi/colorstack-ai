@@ -74,6 +74,7 @@ class ContextMessage(BaseModel):
 
 class ExtractionContext(BaseModel):
     source_message_id: str
+    reply_to_message_id: str | None
     source_author_id: str
     source_author_name: str
     channel_name: str | None
