@@ -32,10 +32,23 @@ Deferred operational work:
 
 ## Phase 3 — Local extraction
 
-- Evaluate a local model against representative Discord messages.
-- Extract tasks, owners, deadlines, decisions, blockers, and event updates.
-- Record confidence and source message IDs for every extracted fact.
-- Add replayable extraction jobs and human-correction paths.
+Status: implemented and manually verified.
+
+- Conservative deterministic relevance filtering limits local-model calls.
+- Bounded context includes replies and nearby channel or thread messages.
+- Ollama produces Pydantic-validated organizational facts.
+- Every fact records confidence, evidence kind, source message, and version.
+- Processing state supports unprocessed, skipped, successful, and failed cases.
+- CLI modes support historical backfill, new messages, and failed retries.
+- New extraction versions preserve earlier facts rather than overwriting them.
+- Local-model and persistence behavior is covered with mocked and integration
+  tests.
+
+Deferred improvements:
+
+- Evaluate extraction quality over a larger labeled sample.
+- Add a human correction workflow.
+- Optimize inference latency and batching if required.
 
 ## Phase 4 — Organizational memory
 
@@ -51,7 +64,7 @@ Deferred operational work:
 - Surface stale tasks, unresolved blockers, and approaching deadlines.
 - Add approval and delivery controls before reports reach Discord users.
 
-## Not planned during Phase 1
+## Not included yet
 
-AI extraction, embeddings, vector search, dashboards, scheduled reports, and
-external data sharing are intentionally outside the current implementation.
+Current-state reconciliation, embeddings, vector search, dashboards, scheduled
+reports, and external data sharing remain outside the current implementation.

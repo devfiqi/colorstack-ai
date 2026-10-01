@@ -28,6 +28,17 @@ message archive as sensitive organizational data.
   when needed.
 - Keep privileged Message Content and Server Members intents enabled only while
   required by the ingestion design.
+- Deny message and thread sending globally. If outbound messaging is added
+  later, allow it only in `#it-dept` through a channel-specific override.
+- Follow the full [bot communication policy](BOT_PERMISSIONS.md).
+
+## Local model
+
+- `OLLAMA_BASE_URL` must resolve to localhost.
+- Discord context is sent only to the configured local Ollama process.
+- Do not configure a remotely hosted or tunneled Ollama endpoint.
+- Raw prompts and model responses may contain private content; keep extraction
+  tables and database backups local.
 
 ## Dependency and code changes
 

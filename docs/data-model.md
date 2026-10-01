@@ -52,3 +52,39 @@ The primary key is `(message_id, emoji)`.
 
 The former JSONL operation format remains available only through the optional
 test/development store; it is not the runtime persistence path.
+
+## `extraction_runs`
+
+Tracks one CLI execution:
+
+- model name and local Ollama configuration
+- extraction and prompt versions
+- start, finish, status, and sanitized error
+- scanned, relevant, skipped, processed, fact, and failure counts
+
+## `message_processing_state`
+
+Uses `(message_id, extraction_version)` as its primary key. It records:
+
+- processing status
+- relevance decision and deterministic reasons
+- extraction run and attempt count
+- validated raw local-model output
+- sanitized failure details and processing timestamps
+
+This key prevents duplicate extraction for the same version while allowing a
+new version to process the same raw message non-destructively.
+
+## `extracted_facts`
+
+Each row is one fact attributed to one raw message:
+
+- fact type
+- event, task, owner, deadline, status, and value fields
+- confidence and explicit/inferred evidence classification
+- source message, extraction run, extraction version, and ordinal
+- active flag reserved for later invalidation workflows
+
+The unique key `(source_message_id, extraction_version, ordinal)` prevents
+duplicates. Phase 3 does not reconcile competing facts or update organizational
+current state.

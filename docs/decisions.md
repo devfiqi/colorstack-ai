@@ -53,9 +53,9 @@ when Discord still permits access.
 
 Status: accepted.
 
-Raw records stay in the Git-ignored `data/` directory. No application component
-uploads messages to GitHub, an AI provider, or an external database. Any future
-external processing requires a deliberate security and privacy decision.
+Raw records stay in local PostgreSQL. No application component uploads messages
+to GitHub, an external AI provider, or a hosted database. Any future external
+processing requires a deliberate security and privacy decision.
 
 ## 008 — PostgreSQL as the durable raw archive
 
@@ -73,3 +73,35 @@ Status: accepted for Phase 2.
 Attachments and reactions use separate tables. Each message upsert synchronizes
 the current sets only when they differ. Phase 2 does not preserve a revision row
 for every historical attachment or reaction change.
+
+## 010 — Deterministic filtering before local inference
+
+Status: accepted for Phase 3.
+
+Use conservative keyword and reply-context signals before calling Ollama.
+False positives are preferable to missed organizational facts. Skipped messages
+remain in the raw archive and retain their relevance decision.
+
+## 011 — Facts are versioned observations
+
+Status: accepted for Phase 3.
+
+Store facts by source message and extraction version. Do not overwrite older
+facts or reconcile conflicting statements. Organizational current truth belongs
+to Phase 4.
+
+## 012 — Local Ollama only
+
+Status: accepted for Phase 3.
+
+Extraction calls a configurable Ollama server restricted to localhost. Model
+names are configuration, prompts are centralized and versioned, and normal tests
+mock inference instead of requiring a live model.
+
+## 013 — Discord-enforced outbound policy
+
+Status: accepted.
+
+The bot is read-only except for the explicitly authorized `#it-dept` channel.
+Discord role and channel permissions are authoritative; any future outbound
+code must additionally compare an explicit channel ID and fail closed.

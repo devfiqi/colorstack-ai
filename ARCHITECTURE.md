@@ -1,7 +1,8 @@
 # Architecture
 
 ColorStack AI converts Discord activity into durable organizational context.
-The ingestion and local PostgreSQL archive are implemented today.
+The ingestion, local PostgreSQL archive, and local fact extraction layers are
+implemented today.
 
 ## System flow
 
@@ -12,9 +13,11 @@ Ingestion                         implemented
   ↓
 Raw PostgreSQL archive           implemented locally
   ↓
-Local LLM extraction             planned
+Relevance filter                 implemented
   ↓
-Structured organizational state planned
+Local LLM fact extraction        implemented
+  ↓
+Structured organizational state planned for Phase 4
   ↓
 Reasoning model                  planned
   ↓
@@ -35,6 +38,13 @@ Executive briefs and answers     planned
 - `db/models.py` defines the SQLAlchemy archive schema.
 - `db/session.py` owns the async engine and session factory.
 - `alembic/` contains the versioned database migrations.
+- `extraction/relevance.py` performs conservative deterministic filtering.
+- `extraction/context.py` builds bounded reply and nearby-message context.
+- `extraction/ollama.py` validates and calls a local Ollama model.
+- `extraction/prompt.py` contains the versioned extraction instructions.
+- `extraction/processor.py` coordinates filtering, extraction, and progress.
+- `extraction/repository.py` persists runs, states, and append-only facts.
+- `extract/` provides backfill, new-message, and retry CLI modes.
 
 ## Runtime flow
 
@@ -59,10 +69,15 @@ edits update the existing row and related snapshots, and deletions set a flag
 and timestamp rather than removing data. Attachments and reactions are separate
 tables tied to messages with cascading foreign keys.
 
+## Extraction boundary
+
+Phase 3 records facts attributable to individual source messages and extraction
+versions. It deliberately preserves competing facts and does not decide which is
+currently true. Low-relevance messages remain in the raw archive and receive a
+processing-state record rather than being deleted.
+
 ## Planned layers
 
-The extraction layer will turn raw conversations into tasks, owners, deadlines,
-decisions, blockers, and event updates. Organizational memory will reconcile
-those facts into current event state while retaining links to source messages.
-A reasoning layer will use that state for on-demand answers and executive
-briefs.
+Phase 4 will reconcile extracted facts into current organizational state while
+retaining source-message provenance. A later reasoning layer will use that state
+for on-demand answers and executive briefs.

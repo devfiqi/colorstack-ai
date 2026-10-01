@@ -6,12 +6,10 @@ organizational context and proactive executive updates.
 
 ## Current status
 
-Discord ingestion and local PostgreSQL persistence are implemented. The Python
-service discovers accessible channels and threads, backfills message history,
-normalizes message metadata, and records live creates, edits, and deletions.
-
-AI extraction, organizational memory, reasoning, and executive reports are
-planned but not implemented.
+Discord ingestion, local PostgreSQL persistence, and local organizational fact
+extraction are implemented. Extraction uses a conservative deterministic filter
+and a configurable Ollama model. Organizational current-state reconciliation,
+reasoning, and executive reports are not implemented.
 
 ## System direction
 
@@ -66,6 +64,21 @@ Run the bot:
 python -m colorstack_ai
 ```
 
+Configure local extraction:
+
+```env
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=your-installed-model
+EXTRACTION_VERSION=v2
+```
+
+```bash
+ollama list
+python -m colorstack_ai.extract backfill --limit 100
+python -m colorstack_ai.extract new
+python -m colorstack_ai.extract retry-failed
+```
+
 ## Verification queries
 
 ```bash
@@ -91,8 +104,10 @@ LIMIT 10;
 - [Security](SECURITY.md)
 - [Phase 1 ingestion](docs/phase-1.md)
 - [Phase 2 PostgreSQL persistence](docs/phase-2.md)
+- [Phase 3 local extraction](docs/phase-3.md)
 - [Data model](docs/data-model.md)
 - [Technical decisions](docs/decisions.md)
+- [Bot communication policy](BOT_PERMISSIONS.md)
 
 Discord content and credentials remain local. They are excluded from Git and
 are not sent to an AI provider or externally hosted database.
