@@ -472,3 +472,219 @@ class UnresolvedFactRecord(Base):
         server_default=func.now(),
     )
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class PlaybookRecord(Base):
+    __tablename__ = "playbooks"
+    __table_args__ = (
+        UniqueConstraint(
+            "playbook_key",
+            "version",
+            name="uq_playbooks_key_version",
+        ),
+        Index("ix_playbooks_event_type_active", "event_type", "active"),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    playbook_key: Mapped[str] = mapped_column(String(64), nullable=False)
+    name: Mapped[str] = mapped_column(Text, nullable=False)
+    event_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    version: Mapped[str] = mapped_column(String(32), nullable=False)
+    active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    is_overlay: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+    )
+    definition_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    loaded_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+
+
+class PlaybookRequirementRecord(Base):
+    __tablename__ = "playbook_requirements"
+    __table_args__ = (
+        UniqueConstraint(
+            "playbook_id",
+            "requirement_key",
+            name="uq_playbook_requirements_key",
+        ),
+        Index("ix_playbook_requirements_playbook_id", "playbook_id"),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    playbook_id: Mapped[UUID] = mapped_column(
+        ForeignKey("playbooks.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    requirement_key: Mapped[str] = mapped_column(String(64), nullable=False)
+    name: Mapped[str] = mapped_column(Text, nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    required: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    criticality: Mapped[str] = mapped_column(String(16), nullable=False)
+    typical_owner: Mapped[str | None] = mapped_column(Text)
+    ideal_lead_days: Mapped[int | None] = mapped_column(Integer)
+    minimum_lead_days: Mapped[int | None] = mapped_column(Integer)
+    done_when: Mapped[list[object]] = mapped_column(JSONB, nullable=False)
+    common_failure_modes: Mapped[list[object]] = mapped_column(
+        JSONB,
+        nullable=False,
+    )
+    evidence_expected: Mapped[list[object]] = mapped_column(
+        JSONB,
+        nullable=False,
+    )
+    sponsor_dependent: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    event_type_specific: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    next_step: Mapped[str] = mapped_column(Text, nullable=False)
+    evaluation_config: Mapped[dict[str, object]] = mapped_column(
+        JSONB,
+        nullable=False,
+    )
+
+
+class RequirementDependencyRecord(Base):
+    __tablename__ = "requirement_dependencies"
+
+    requirement_id: Mapped[UUID] = mapped_column(
+        ForeignKey("playbook_requirements.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    depends_on_requirement_id: Mapped[UUID] = mapped_column(
+        ForeignKey("playbook_requirements.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+
+
+class EventPlaybookRecord(Base):
+    __tablename__ = "event_playbooks"
+
+    event_id: Mapped[UUID] = mapped_column(
+        ForeignKey("events.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    playbook_id: Mapped[UUID] = mapped_column(
+        ForeignKey("playbooks.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    detection_reason: Mapped[str] = mapped_column(Text, nullable=False)
+    confidence: Mapped[float] = mapped_column(Float, nullable=False)
+    assigned_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+
+
+class RequirementEvaluationRunRecord(Base):
+    __tablename__ = "requirement_evaluation_runs"
+    __table_args__ = (Index("ix_requirement_runs_event_id", "event_id"),)
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    event_id: Mapped[UUID] = mapped_column(
+        ForeignKey("events.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    readiness_score: Mapped[float | None] = mapped_column(Float)
+    complete_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    in_progress_count: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0,
+    )
+    missing_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    blocked_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    unknown_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    not_applicable_count: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0,
+    )
+    critical_gap_count: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0,
+    )
+    error: Mapped[str | None] = mapped_column(Text)
+
+
+class EventRequirementStateRecord(Base):
+    __tablename__ = "event_requirement_state"
+    __table_args__ = (
+        Index("ix_event_requirement_state_status", "status"),
+        Index("ix_event_requirement_state_urgency", "urgency"),
+    )
+
+    event_id: Mapped[UUID] = mapped_column(
+        ForeignKey("events.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    requirement_id: Mapped[UUID] = mapped_column(
+        ForeignKey("playbook_requirements.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    urgency: Mapped[str] = mapped_column(String(16), nullable=False)
+    confidence: Mapped[float] = mapped_column(Float, nullable=False)
+    evidence: Mapped[list[object]] = mapped_column(JSONB, nullable=False)
+    recommendation: Mapped[str | None] = mapped_column(Text)
+    rationale: Mapped[str] = mapped_column(Text, nullable=False)
+    last_run_id: Mapped[UUID] = mapped_column(
+        ForeignKey("requirement_evaluation_runs.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    evaluated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+
+
+class RequirementEvaluationRecord(Base):
+    __tablename__ = "requirement_evaluations"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "event_id",
+            "requirement_id",
+            name="uq_requirement_evaluations_run_event_requirement",
+        ),
+        Index("ix_requirement_evaluations_event_id", "event_id"),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    run_id: Mapped[UUID] = mapped_column(
+        ForeignKey("requirement_evaluation_runs.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    event_id: Mapped[UUID] = mapped_column(
+        ForeignKey("events.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    requirement_id: Mapped[UUID] = mapped_column(
+        ForeignKey("playbook_requirements.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    urgency: Mapped[str] = mapped_column(String(16), nullable=False)
+    confidence: Mapped[float] = mapped_column(Float, nullable=False)
+    evidence: Mapped[list[object]] = mapped_column(JSONB, nullable=False)
+    recommendation: Mapped[str | None] = mapped_column(Text)
+    rationale: Mapped[str] = mapped_column(Text, nullable=False)
+    readiness_weight: Mapped[float] = mapped_column(Float, nullable=False)
+    readiness_earned: Mapped[float] = mapped_column(Float, nullable=False)
+    evaluated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
