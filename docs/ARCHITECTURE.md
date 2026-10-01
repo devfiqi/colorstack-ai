@@ -1,8 +1,8 @@
 # Architecture
 
 ColorStack AI converts Discord activity into durable organizational context.
-The ingestion, local PostgreSQL archive, and local fact extraction layers are
-implemented today.
+Ingestion, the local PostgreSQL archive, local fact extraction, and
+organizational state reconciliation are implemented.
 
 ## System flow
 
@@ -17,7 +17,7 @@ Relevance filter                 implemented
   ↓
 Local LLM fact extraction        implemented
   ↓
-Structured organizational state planned for Phase 4
+Structured organizational state implemented
   ↓
 Reasoning model                  planned
   ↓
@@ -45,6 +45,13 @@ Executive briefs and answers     planned
 - `extraction/processor.py` coordinates filtering, extraction, and progress.
 - `extraction/repository.py` persists runs, states, and append-only facts.
 - `extract/` provides backfill, new-message, and retry CLI modes.
+- `state/resolution.py` conservatively resolves canonical events and tasks.
+- `state/policy.py` contains deterministic precedence and lifecycle rules.
+- `state/repository.py` persists current values, audit history, and unresolved
+  facts transactionally.
+- `state/processor.py` coordinates idempotent reconciliation and rebuilds.
+- `state/ambiguity.py` validates optional local-model interpretations.
+- `state/` provides reconcile-new, retry-unresolved, and rebuild CLI modes.
 
 ## Runtime flow
 
@@ -76,8 +83,20 @@ versions. It deliberately preserves competing facts and does not decide which is
 currently true. Low-relevance messages remain in the raw archive and receive a
 processing-state record rather than being deleted.
 
+## State boundary
+
+Phase 4 treats extracted facts as immutable evidence and current state as a
+rebuildable projection. Every applied value points to a fact and source message;
+each transition is recorded in `state_changes`. Ambiguous entity matches or
+unsafe updates are retained in processing and unresolved records instead of
+being guessed.
+
+Entity resolution is guild-scoped and conservative. Mutable values use an
+extensible field/value representation over canonical event and task identities.
+Deterministic policy controls precedence; Ollama can only return a validated
+proposal and never writes state directly.
+
 ## Planned layers
 
-Phase 4 will reconcile extracted facts into current organizational state while
-retaining source-message provenance. A later reasoning layer will use that state
-for on-demand answers and executive briefs.
+Phase 5 will add event playbooks and higher-level reasoning over the structured,
+source-linked state.

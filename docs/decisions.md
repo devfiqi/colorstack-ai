@@ -105,3 +105,29 @@ Status: accepted.
 The bot is read-only except for the explicitly authorized `#it-dept` channel.
 Discord role and channel permissions are authoritative; any future outbound
 code must additionally compare an explicit channel ID and fail closed.
+
+## 014 — Current state is a rebuildable projection
+
+Status: accepted for Phase 4.
+
+Keep extracted facts immutable and store mutable truth in separate current-value
+rows. State changes retain the fact and source-message path. A rebuild deletes
+only Phase 4 derived records and deterministically replays active facts.
+
+## 015 — Conservative deterministic reconciliation
+
+Status: accepted for Phase 4.
+
+Resolve entities by guild-scoped normalized names, aliases, and unambiguous
+local context. Central policy controls evidence precedence, date precision,
+ownership, completion, cancellation, and explicit reopen behavior. Defer rather
+than merge or overwrite when certainty is insufficient.
+
+## 016 — Models propose; application policy decides
+
+Status: accepted for Phase 4.
+
+Use Ollama only when deterministic fact-to-field mapping fails and the CLI
+explicitly enables ambiguity resolution. Validate its structured proposal with
+Pydantic, require it to target the already resolved entity type, and pass it
+through the same deterministic policy. The model never writes database state.

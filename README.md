@@ -6,10 +6,9 @@ organizational context and proactive executive updates.
 
 ## Current status
 
-Discord ingestion, local PostgreSQL persistence, and local organizational fact
-extraction are implemented. Extraction uses a conservative deterministic filter
-and a configurable Ollama model. Organizational current-state reconciliation,
-reasoning, and executive reports are not implemented.
+Discord ingestion, local PostgreSQL persistence, local fact extraction, and
+versioned organizational-state reconciliation are implemented. Reasoning,
+event playbooks, and executive reports are not implemented.
 
 ## System direction
 
@@ -79,6 +78,17 @@ python -m colorstack_ai.extract new
 python -m colorstack_ai.extract retry-failed
 ```
 
+Reconcile facts into current state:
+
+```bash
+python -m colorstack_ai.state reconcile-new
+python -m colorstack_ai.state retry-unresolved
+python -m colorstack_ai.state rebuild
+```
+
+Add `--resolve-ambiguous` to use the configured local Ollama model only for
+facts that deterministic rules cannot classify safely.
+
 ## Verification queries
 
 ```bash
@@ -89,6 +99,10 @@ psql colorstack_ai
 SELECT COUNT(*) FROM messages;
 SELECT COUNT(*) FROM attachments;
 SELECT COUNT(*) FROM reactions;
+SELECT COUNT(*) FROM extracted_facts;
+SELECT COUNT(*) FROM current_state_values;
+SELECT COUNT(*) FROM state_changes;
+SELECT COUNT(*) FROM unresolved_facts WHERE status = 'unresolved';
 SELECT COUNT(*) FROM messages WHERE is_deleted;
 SELECT id, channel_name, edited_at
 FROM messages
@@ -106,6 +120,7 @@ LIMIT 10;
 - [Phase 1 ingestion](docs/phase-1.md)
 - [Phase 2 PostgreSQL persistence](docs/phase-2.md)
 - [Phase 3 local extraction](docs/phase-3.md)
+- [Phase 4 organizational state](docs/phase-4.md)
 - [Data model](docs/data-model.md)
 - [Technical decisions](docs/decisions.md)
 - [Bot communication policy](docs/BOT_PERMISSIONS.md)

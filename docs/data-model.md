@@ -86,5 +86,51 @@ Each row is one fact attributed to one raw message:
 - active flag reserved for later invalidation workflows
 
 The unique key `(source_message_id, extraction_version, ordinal)` prevents
-duplicates. Phase 3 does not reconcile competing facts or update organizational
+duplicates. Extracted rows remain historical evidence when Phase 4 derives
 current state.
+
+## Phase 4 organizational state
+
+### `reconciliation_runs`
+
+Tracks each incremental, retry, or rebuild execution and its applied, deferred,
+unchanged, and failed counts.
+
+### `events` and `event_aliases`
+
+Events have deterministic internal IDs, guild scope, canonical names, and
+normalized names. Aliases are unique within a guild and retain their source fact
+when available.
+
+### `tasks`
+
+Tasks have deterministic internal IDs, guild scope, an optional event link, and
+canonical and normalized titles. Mutable task data is stored separately.
+
+### `current_state_values`
+
+Stores one current JSON value per `(entity_type, entity_id, field)`. Each value
+records its source fact, source message, confidence, evidence kind, and effective
+time. Fields cover status, owner, deadlines, location, funding, sponsorship,
+blockers, decisions, logistics, and other operational domains.
+
+### `state_changes`
+
+The append-only audit trail records previous and new values, change
+classification, policy reason, reconciliation confidence, source fact, source
+message, and effective time. A fact/entity/field uniqueness constraint prevents
+duplicate transitions.
+
+### `fact_reconciliation_state`
+
+Tracks each fact as processing, applied, unchanged, unresolved, or failed. It
+stores the resolved entity, outcome, reason, attempt count, and run reference.
+
+### `unresolved_facts`
+
+Preserves facts that cannot be mapped or classified safely. It records retry
+metadata, candidate details, and any validated local-model proposal. Resolution
+marks the row resolved instead of erasing its history.
+
+All Phase 4 tables are derived from active facts. `rebuild` replaces only this
+derived projection and preserves raw messages and extracted facts.

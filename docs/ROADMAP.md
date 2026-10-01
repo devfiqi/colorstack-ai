@@ -52,10 +52,24 @@ Deferred improvements:
 
 ## Phase 4 — Organizational memory
 
-- Model events, people, tasks, decisions, and status changes.
-- Reconcile new facts with current event state.
-- Preserve provenance and conflicting information.
-- Support targeted queries without rereading the full message archive.
+Status: implemented and manually verified.
+
+- Canonical guild-scoped events, aliases, and tasks anchor current state.
+- Deterministic rules reconcile facts into extensible current values.
+- Explicit evidence, date precision, lifecycle, and confidence control
+  precedence.
+- Every applied transition links to its fact and Discord source message.
+- Ambiguous facts are deferred; optional Ollama output is validated as a
+  proposal before policy evaluation.
+- Incremental, retry, and deterministic rebuild modes are idempotent.
+- Integration tests cover corrections, ownership, completion, cancellation,
+  conflicts, aliases, unresolved facts, and rebuilds.
+
+Deferred improvements:
+
+- Add a human review and correction workflow for unresolved facts.
+- Improve cross-message and cross-version semantic deduplication.
+- Add dedicated query services when Phase 5 consumers require them.
 
 ## Phase 5 — Reasoning and reporting
 
@@ -66,5 +80,5 @@ Deferred improvements:
 
 ## Not included yet
 
-Current-state reconciliation, embeddings, vector search, dashboards, scheduled
-reports, and external data sharing remain outside the current implementation.
+Event playbooks, embeddings, vector search, dashboards, scheduled reports, and
+external data sharing remain outside the current implementation.
