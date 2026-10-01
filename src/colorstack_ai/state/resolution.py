@@ -1,7 +1,7 @@
 import re
 import unicodedata
 from datetime import timedelta
-from uuid import UUID
+from uuid import UUID, uuid5
 
 from sqlalchemy import and_, select
 
@@ -33,6 +33,8 @@ GENERIC_EVENT_WORDS = {
     "program",
 }
 TOKEN_RE = re.compile(r"[a-z0-9]+")
+EVENT_NAMESPACE = UUID("55ed4bc9-a295-46de-9626-38a1442785e9")
+TASK_NAMESPACE = UUID("b29874d5-6fbe-4334-96fc-7dc1129bd430")
 
 
 def normalize_name(value: str) -> str:
@@ -138,6 +140,10 @@ class EntityResolver:
         if task is None:
             async with self._database.sessions.begin() as session:
                 task = TaskRecord(
+                    id=uuid5(
+                        TASK_NAMESPACE,
+                        f"{fact.guild_id}:{event_id}:{normalized}",
+                    ),
                     guild_id=fact.guild_id,
                     event_id=event_id,
                     canonical_title=fact.task,
@@ -216,6 +222,7 @@ class EntityResolver:
     ) -> EventRecord:
         async with self._database.sessions.begin() as session:
             event = EventRecord(
+                id=uuid5(EVENT_NAMESPACE, f"{guild_id}:{normalized}"),
                 guild_id=guild_id,
                 canonical_name=name,
                 normalized_name=normalized,

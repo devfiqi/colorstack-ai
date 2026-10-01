@@ -175,6 +175,7 @@ class StateProcessorTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(rebuilt.scanned, 2)
         self.assertIsNotNone(rebuilt_event)
         assert rebuilt_event is not None
+        self.assertEqual(event.id, rebuilt_event.id)
         state_after = await self.repository.state_for_entity(
             entity_type="event",
             entity_id=rebuilt_event.id,
