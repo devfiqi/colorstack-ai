@@ -174,3 +174,23 @@ weighted percentage, not an unweighted count.
 Append-only history for every requirement evaluated in a run, including
 evidence and its readiness weight and earned points. Re-evaluation updates
 current state while preserving prior snapshots.
+
+## Phase 6 context models
+
+Phase 6 adds no database tables. Context is a bounded, read-only projection over
+existing PostgreSQL records.
+
+Pydantic packages include:
+
+- `EventContext`: state, readiness, requirements, tasks, owners, blockers,
+  deadlines, changes, messages, facts, and unresolved facts
+- `TaskContext`: task state, event, dependencies, facts, changes, and messages
+- `PersonContext`: identity, assigned tasks, owned events, commitments,
+  deadlines, unresolved responsibilities, and recent activity
+- `OrganizationContext`: active and urgent events, critical requirements,
+  blockers, deadlines, unresolved carryover, and recent changes
+- `StructuredContextPackage`: optional query interpretation plus one typed
+  context payload and warnings
+
+Every item preserves available event, task, fact, message, and timestamp
+provenance. Collection limits are configuration, not persisted state.

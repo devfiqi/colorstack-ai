@@ -93,20 +93,49 @@ Deferred improvements:
 - Add a human applicability and completion override workflow.
 - Calibrate completion rules with more real event data.
 
-## Phase 6 — Historical learning and customization
+## Phase 6 — Retrieval and context assembly
 
-- Learn reviewed lead times and recurring failure patterns from past events.
-- Support approved ColorStack and sponsor-specific requirement overrides.
-- Compare predicted requirements with actual outcomes without mutating history.
+Status: implemented and manually verified.
 
-## Later — Reasoning and reporting
+- Typed event, task, person, organization, and question-aware packages expose
+  compact source-linked context.
+- SQL retrieval uses entity relationships, current state, playbook results,
+  recency, reply chains, and text matches without embeddings.
+- Deterministic query parsing supports status, missing requirements, blockers,
+  owners, tasks, deadlines, changes, priorities, responsibilities, organization
+  status, and unresolved items.
+- Ranking prioritizes urgency, criticality, blockers, deadlines, provenance,
+  explicit query matches, event or owner matches, and recency.
+- Configurable limits prevent full-history context dumps.
+- Organization context combines the latest 24 hours with older unresolved
+  carryover.
+- Ambiguous entity matches fail closed and return candidate warnings.
+
+Deferred improvements:
+
+- Add PostgreSQL text-search indexes if archive size makes filtered scans slow.
+- Add semantic retrieval behind the existing interface only if deterministic
+  retrieval proves insufficient.
+- Add a first-class people and role directory.
+
+## Phase 7 — Reasoning
+
+- Consume structured context packages without direct unrestricted database
+  access.
+- Answer leadership questions with source-linked claims.
+- Preserve uncertainty and distinguish facts from inferred gaps.
+- Add evaluation and approval controls before producing operational advice.
+
+## Later — Reporting and learning
 
 - Answer leadership questions from structured, source-linked context.
 - Generate daily executive briefs.
 - Surface stale tasks, unresolved blockers, and approaching deadlines.
 - Add approval and delivery controls before reports reach Discord users.
+- Learn reviewed lead times and recurring failure patterns from past events.
 
 ## Not included yet
 
-Historical learning, embeddings, vector search, dashboards, scheduled reports,
-and external data sharing remain outside the current implementation.
+Reasoning, historical learning, embeddings, vector search, dashboards,
+scheduled reports, and external data sharing remain outside the current
+implementation.

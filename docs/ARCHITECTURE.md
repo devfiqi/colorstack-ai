@@ -3,7 +3,8 @@
 ColorStack AI converts Discord activity into durable organizational context.
 Ingestion, the local PostgreSQL archive, local fact extraction, and
 organizational state reconciliation are implemented. Phase 5 adds event
-playbooks and evidence-based readiness evaluation.
+playbooks and evidence-based readiness evaluation. Phase 6 adds bounded,
+question-aware retrieval and structured context assembly.
 
 ## System flow
 
@@ -22,7 +23,7 @@ Structured organizational state implemented
   ↓
 Event playbooks and readiness    implemented
   ↓
-Historical learning             planned
+Retrieval and context assembly  implemented
   ↓
 Reasoning model                  planned
   ↓
@@ -64,6 +65,16 @@ Executive briefs and answers     planned
 - `playbooks/repository.py` persists definitions, assignments, current
   requirement state, evidence, and evaluation history.
 - `requirements/` provides event and all-active-event evaluation commands.
+- `context/retrieval.py` centralizes entity resolution and structured SQL
+  retrieval across archive, fact, state, and playbook tables.
+- `context/query_parser.py` deterministically identifies supported query scopes
+  and intents.
+- `context/ranking.py` prioritizes urgency, blockers, deadlines, provenance,
+  query matches, and recency.
+- `context/*_context.py` assembles bounded event, task, person, and organization
+  packages.
+- `context/builder.py` provides the Phase 7-facing context boundary.
+- `context/` exposes JSON-producing CLI commands.
 
 ## Runtime flow
 
@@ -119,8 +130,19 @@ Event-type detection may select one base playbook plus the company-sponsored
 overlay. Ambiguous base types remain unknown. Playbook files can extend generic
 definitions for future ColorStack-specific customization.
 
+## Context boundary
+
+Phase 6 does not summarize or reason. It selects compact source-linked material
+for a known entity or deterministic query interpretation. Current state and
+urgent playbook gaps outrank historical facts and raw messages. Explicit limits
+bound every high-volume collection.
+
+Question parsing fails closed when an event, task, or person resolves to zero or
+multiple candidates. The retrieval service uses relational links, normalized
+names, SQL filters, provenance, and recency; its interface can accept a vector
+search implementation later without changing context models.
+
 ## Planned layers
 
-Phase 6 will add historical learning and controlled customization without
-rewriting prior evaluations. Higher-level reasoning and daily reporting remain
-later work.
+Phase 7 will consume the structured context package with a reasoning model.
+Daily report generation and delivery remain later work.

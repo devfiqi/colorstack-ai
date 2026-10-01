@@ -118,5 +118,6 @@ Manual seeded verification confirmed:
 - Optional items remain unknown until evidence or an applicability decision
   exists.
 - There is no human review interface for applicability overrides.
-- Historical learning and automatic playbook tuning are deferred to Phase 6.
+- Historical learning and automatic playbook tuning are deferred to a later
+  phase.
 - Daily reports and outbound recommendations are not part of this phase.

@@ -166,3 +166,38 @@ Status: accepted for Phase 5.
 Upsert the latest event/requirement state while appending a complete evaluation
 snapshot per run. This supports auditability and future historical learning
 without changing raw messages, extracted facts, or state-change history.
+
+## 021 — Structured retrieval before semantic search
+
+Status: accepted for Phase 6.
+
+Use SQL relationships, normalized entity names, current state, playbook
+evaluations, source references, filtered text matches, and recency before adding
+embeddings. Keep retrieval behind one service so semantic search can be added
+later without changing context consumers.
+
+## 022 — Context is bounded and priority ordered
+
+Status: accepted for Phase 6.
+
+Limit messages, changes, tasks, requirements, facts, events, and recency
+explicitly. Rank current state, critical gaps, blockers, deadlines, owners, and
+recent source-linked changes ahead of raw messages and older facts. Provenance
+matches outrank unrelated recency.
+
+## 023 — Deterministic query parsing fails closed
+
+Status: accepted for Phase 6.
+
+Map supported question patterns to a scope, intent, and entity phrase without a
+reasoning model. Resolve normalized events, tasks, and people conservatively.
+When zero or multiple entities match, return warnings and candidates instead of
+assembling context for a guessed entity.
+
+## 024 — Phase 6 does not reason
+
+Status: accepted.
+
+Context builders retrieve and organize evidence but do not summarize, recommend,
+or answer the user question. Phase 7 receives one typed context package and is
+responsible for reasoning under separate safety and evaluation controls.

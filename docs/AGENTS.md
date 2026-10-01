@@ -5,8 +5,8 @@ These rules apply to automated coding work in this repository.
 ## Scope
 
 - Preserve Discord ingestion, PostgreSQL archival, local Ollama extraction,
-  state reconciliation, and event-playbook behavior.
-- Do not begin Phase 6 unless explicitly requested.
+  state reconciliation, event-playbook, and context-retrieval behavior.
+- Do not begin Phase 7 unless explicitly requested.
 - Keep raw Discord messages as the local source of truth.
 - Keep persistence and model boundaries replaceable.
 

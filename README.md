@@ -8,8 +8,10 @@ organizational context and proactive executive updates.
 
 Discord ingestion, local PostgreSQL persistence, local fact extraction, and
 versioned organizational-state reconciliation are implemented. Versioned event
-playbooks now identify missing work, urgency, and readiness. Historical
-learning, higher-level reasoning, and executive reports are not implemented.
+playbooks identify missing work, urgency, and readiness. A bounded retrieval
+layer now assembles source-linked event, task, person, organization, and
+question-aware context. The final reasoning model and executive reports are not
+implemented.
 
 ## System direction
 
@@ -100,6 +102,16 @@ python -m colorstack_ai.requirements evaluate-all
 python -m colorstack_ai.requirements evaluate-event <event-id>
 ```
 
+Build structured context packages:
+
+```bash
+python -m colorstack_ai.context event <event-id>
+python -m colorstack_ai.context task <task-id>
+python -m colorstack_ai.context person <discord-user-id>
+python -m colorstack_ai.context org
+python -m colorstack_ai.context query "What are we missing for Adobe?"
+```
+
 ## Verification queries
 
 ```bash
@@ -136,6 +148,7 @@ LIMIT 10;
 - [Phase 3 local extraction](docs/phase-3.md)
 - [Phase 4 organizational state](docs/phase-4.md)
 - [Phase 5 event playbooks](docs/phase-5.md)
+- [Phase 6 retrieval and context](docs/phase-6.md)
 - [Playbook format](docs/playbook-format.md)
 - [Data model](docs/data-model.md)
 - [Technical decisions](docs/decisions.md)
