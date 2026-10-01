@@ -179,10 +179,16 @@ def proposals_for_fact(
         if fact.fact_type == "cancellation":
             status = "cancelled"
         if status:
+            change_type = _status_change_type(status)
+            if status in ACTIVE_STATUSES and any(
+                marker in fact.message_content.casefold()
+                for marker in ("reopen", "resume", "back on", "restart")
+            ):
+                change_type = ChangeType.REOPEN
             add(
                 StateField.STATUS,
                 _text_value(status),
-                _status_change_type(status),
+                change_type,
                 "explicit status update",
             )
 
