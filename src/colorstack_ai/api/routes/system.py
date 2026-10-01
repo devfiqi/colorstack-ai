@@ -1,3 +1,5 @@
+import os
+
 from fastapi import APIRouter, Depends
 
 from colorstack_ai.api.dependencies import get_database
@@ -14,9 +16,22 @@ async def system_status(database: Database = Depends(get_database)) -> SystemRes
     settings = load_daily_brief_environment()
     return SystemResponse(
         database="Connected",
-        discord="Configured",
-        extraction="Local Ollama",
-        reasoning="Configured",
+        discord=(
+            "Configured"
+            if os.getenv("DISCORD_TOKEN", "").strip()
+            else "Not configured"
+        ),
+        extraction=(
+            "Configured"
+            if os.getenv("OLLAMA_MODEL", "").strip()
+            else "Not configured"
+        ),
+        reasoning=(
+            "Configured"
+            if os.getenv("REASONING_MODEL", "").strip()
+            and os.getenv("OPENAI_API_KEY", "").strip()
+            else "Not configured"
+        ),
         daily_brief_enabled=settings.enabled,
         daily_brief_schedule=(
             f"{settings.scheduled_time.strftime('%H:%M')} {settings.timezone}"

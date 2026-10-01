@@ -1,6 +1,7 @@
 import unittest
 from datetime import UTC, datetime
 from typing import cast
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
@@ -119,3 +120,23 @@ class DashboardApiTest(unittest.TestCase):
                 "/api/events/11111111-1111-1111-1111-111111111111"
             )
         self.assertEqual(response.status_code, 404)
+
+    def test_system_status_reflects_configuration_presence(self) -> None:
+        with patch.dict(
+            "os.environ",
+            {
+                "DISCORD_TOKEN": "test",
+                "OLLAMA_MODEL": "test-model",
+                "REASONING_MODEL": "test-reasoning-model",
+                "OPENAI_API_KEY": "test",
+                "DAILY_BRIEF_ENABLED": "false",
+            },
+            clear=False,
+        ):
+            with self.client:
+                response = self.client.get("/api/system")
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["discord"], "Configured")
+        self.assertEqual(payload["extraction"], "Configured")
+        self.assertEqual(payload["reasoning"], "Configured")
