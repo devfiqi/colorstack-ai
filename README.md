@@ -99,15 +99,16 @@ LIMIT 10;
 
 ## Documentation
 
-- [Architecture](ARCHITECTURE.md)
-- [Roadmap](ROADMAP.md)
-- [Security](SECURITY.md)
+- [Agent instructions](docs/AGENTS.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Roadmap](docs/ROADMAP.md)
+- [Security](docs/SECURITY.md)
 - [Phase 1 ingestion](docs/phase-1.md)
 - [Phase 2 PostgreSQL persistence](docs/phase-2.md)
 - [Phase 3 local extraction](docs/phase-3.md)
 - [Data model](docs/data-model.md)
 - [Technical decisions](docs/decisions.md)
-- [Bot communication policy](BOT_PERMISSIONS.md)
+- [Bot communication policy](docs/BOT_PERMISSIONS.md)
 
 Discord content and credentials remain local. They are excluded from Git and
 are not sent to an AI provider or externally hosted database.
