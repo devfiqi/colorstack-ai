@@ -140,3 +140,13 @@ class DashboardApiTest(unittest.TestCase):
         self.assertEqual(payload["discord"], "Configured")
         self.assertEqual(payload["extraction"], "Configured")
         self.assertEqual(payload["reasoning"], "Configured")
+
+    def test_system_status_alias(self) -> None:
+        with patch.dict(
+            "os.environ",
+            {"DAILY_BRIEF_ENABLED": "false"},
+            clear=False,
+        ):
+            with self.client:
+                response = self.client.get("/api/system/status")
+        self.assertEqual(response.status_code, 200)

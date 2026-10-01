@@ -11,6 +11,7 @@ router = APIRouter(prefix="/api")
 
 
 @router.get("/system", response_model=SystemResponse)
+@router.get("/system/status", response_model=SystemResponse)
 async def system_status(database: Database = Depends(get_database)) -> SystemResponse:
     await database.check_connection()
     settings = load_daily_brief_environment()
