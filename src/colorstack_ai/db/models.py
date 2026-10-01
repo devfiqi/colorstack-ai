@@ -219,3 +219,256 @@ class ExtractedFactRecord(Base):
         nullable=False,
         server_default=func.now(),
     )
+
+
+class ReconciliationRunRecord(Base):
+    __tablename__ = "reconciliation_runs"
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    mode: Mapped[str] = mapped_column(String(32), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    error: Mapped[str | None] = mapped_column(Text)
+    scanned_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    applied_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    deferred_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    no_change_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    failed_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+
+class EventRecord(Base):
+    __tablename__ = "events"
+    __table_args__ = (
+        UniqueConstraint(
+            "guild_id",
+            "normalized_name",
+            name="uq_events_guild_normalized_name",
+        ),
+        Index("ix_events_guild_id", "guild_id"),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    guild_id: Mapped[str] = mapped_column(String(32), nullable=False)
+    canonical_name: Mapped[str] = mapped_column(Text, nullable=False)
+    normalized_name: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+
+class EventAliasRecord(Base):
+    __tablename__ = "event_aliases"
+    __table_args__ = (
+        UniqueConstraint(
+            "guild_id",
+            "normalized_alias",
+            name="uq_event_aliases_guild_normalized_alias",
+        ),
+        Index("ix_event_aliases_event_id", "event_id"),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    guild_id: Mapped[str] = mapped_column(String(32), nullable=False)
+    event_id: Mapped[UUID] = mapped_column(
+        ForeignKey("events.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    alias: Mapped[str] = mapped_column(Text, nullable=False)
+    normalized_alias: Mapped[str] = mapped_column(Text, nullable=False)
+    source_fact_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("extracted_facts.id", ondelete="SET NULL")
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+
+
+class TaskRecord(Base):
+    __tablename__ = "tasks"
+    __table_args__ = (
+        UniqueConstraint(
+            "guild_id",
+            "event_id",
+            "normalized_title",
+            name="uq_tasks_guild_event_normalized_title",
+        ),
+        Index("ix_tasks_guild_id", "guild_id"),
+        Index("ix_tasks_event_id", "event_id"),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    guild_id: Mapped[str] = mapped_column(String(32), nullable=False)
+    event_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("events.id", ondelete="SET NULL")
+    )
+    canonical_title: Mapped[str] = mapped_column(Text, nullable=False)
+    normalized_title: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+
+class CurrentStateValueRecord(Base):
+    __tablename__ = "current_state_values"
+    __table_args__ = (
+        UniqueConstraint(
+            "entity_type",
+            "entity_id",
+            "field",
+            name="uq_current_state_entity_field",
+        ),
+        Index("ix_current_state_entity", "entity_type", "entity_id"),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    entity_type: Mapped[str] = mapped_column(String(16), nullable=False)
+    entity_id: Mapped[UUID] = mapped_column(Uuid, nullable=False)
+    field: Mapped[str] = mapped_column(String(64), nullable=False)
+    value: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+    source_fact_id: Mapped[UUID] = mapped_column(
+        ForeignKey("extracted_facts.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    source_message_id: Mapped[str] = mapped_column(
+        ForeignKey("messages.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    confidence: Mapped[float] = mapped_column(Float, nullable=False)
+    evidence_kind: Mapped[str] = mapped_column(String(16), nullable=False)
+    effective_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+
+class StateChangeRecord(Base):
+    __tablename__ = "state_changes"
+    __table_args__ = (
+        UniqueConstraint(
+            "source_fact_id",
+            "entity_type",
+            "entity_id",
+            "field",
+            name="uq_state_changes_fact_entity_field",
+        ),
+        Index("ix_state_changes_entity", "entity_type", "entity_id"),
+        Index("ix_state_changes_source_message_id", "source_message_id"),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    reconciliation_run_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("reconciliation_runs.id", ondelete="SET NULL")
+    )
+    entity_type: Mapped[str] = mapped_column(String(16), nullable=False)
+    entity_id: Mapped[UUID] = mapped_column(Uuid, nullable=False)
+    field: Mapped[str] = mapped_column(String(64), nullable=False)
+    previous_value: Mapped[dict[str, object] | None] = mapped_column(JSONB)
+    new_value: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+    change_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    source_fact_id: Mapped[UUID] = mapped_column(
+        ForeignKey("extracted_facts.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    source_message_id: Mapped[str] = mapped_column(
+        ForeignKey("messages.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    reason: Mapped[str] = mapped_column(Text, nullable=False)
+    reconciliation_confidence: Mapped[float] = mapped_column(
+        Float,
+        nullable=False,
+    )
+    effective_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+
+
+class FactReconciliationStateRecord(Base):
+    __tablename__ = "fact_reconciliation_state"
+    __table_args__ = (
+        Index("ix_fact_reconciliation_status", "status"),
+    )
+
+    fact_id: Mapped[UUID] = mapped_column(
+        ForeignKey("extracted_facts.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    reconciliation_run_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("reconciliation_runs.id", ondelete="SET NULL")
+    )
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    entity_type: Mapped[str | None] = mapped_column(String(16))
+    entity_id: Mapped[UUID | None] = mapped_column(Uuid)
+    outcome: Mapped[str | None] = mapped_column(String(32))
+    reason: Mapped[str | None] = mapped_column(Text)
+    attempt_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    processed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+
+class UnresolvedFactRecord(Base):
+    __tablename__ = "unresolved_facts"
+    __table_args__ = (Index("ix_unresolved_facts_status", "status"),)
+
+    fact_id: Mapped[UUID] = mapped_column(
+        ForeignKey("extracted_facts.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    reason: Mapped[str] = mapped_column(Text, nullable=False)
+    candidate_data: Mapped[dict[str, object] | None] = mapped_column(JSONB)
+    proposed_interpretation: Mapped[dict[str, object] | None] = mapped_column(
+        JSONB
+    )
+    attempt_count: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    first_seen_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+    last_attempted_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
