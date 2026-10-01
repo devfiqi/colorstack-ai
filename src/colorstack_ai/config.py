@@ -10,6 +10,10 @@ class Environment(BaseModel):
     database_url: SecretStr
 
 
+class DatabaseEnvironment(BaseModel):
+    database_url: SecretStr
+
+
 class ExtractionEnvironment(BaseModel):
     database_url: SecretStr
     ollama_base_url: str
@@ -46,6 +50,11 @@ def load_environment() -> Environment:
         discord_token=SecretStr(token),
         database_url=_load_database_url(),
     )
+
+
+def load_database_environment() -> DatabaseEnvironment:
+    load_dotenv()
+    return DatabaseEnvironment(database_url=_load_database_url())
 
 
 def load_extraction_environment() -> ExtractionEnvironment:
