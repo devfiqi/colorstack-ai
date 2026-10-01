@@ -1,0 +1,17 @@
+key: social
+name: Social / Board Bonding
+event_type: social
+version: "1"
+detection_keywords: [social, board bonding, retreat, game night, hangout]
+requirements:
+  - {key: objective, name: Purpose, required: true, criticality: medium, done_when: [social or bonding goal documented], evaluation: {task_keywords: [purpose, objective], completion_mode: task_completed}}
+  - {key: event_date_time, name: Date and time, required: true, criticality: critical, ideal_lead_days: 14, minimum_lead_days: 7, done_when: [time confirmed], evaluation: {event_fields: [event_date_time]}}
+  - {key: venue, name: Location, required: true, criticality: critical, ideal_lead_days: 14, minimum_lead_days: 7, done_when: [location confirmed], evaluation: {event_fields: [location], task_keywords: [location, venue]}}
+  - {key: attendance, name: Attendance / RSVP, required: true, criticality: medium, dependencies: [event_date_time, venue], done_when: [attendance estimate confirmed], evaluation: {event_fields: [registration], task_keywords: [RSVP, attendance], completion_terms: [confirmed, final], completion_mode: terms}}
+  - {key: activity, name: Activity plan, required: true, criticality: high, dependencies: [objective], done_when: [activity and supplies ready], evaluation: {task_keywords: [activity, game, bonding], completion_terms: [ready, confirmed], completion_mode: terms}}
+  - {key: food, name: Food / drinks, criticality: medium, done_when: [food plan confirmed], evaluation: {event_fields: [food], task_keywords: [food, drinks], completion_terms: [confirmed, ordered], completion_mode: terms}}
+  - {key: dietary_needs, name: Dietary needs, criticality: medium, dependencies: [food, attendance], done_when: [dietary needs covered], evaluation: {task_keywords: [dietary, allergy], completion_terms: [covered, confirmed], completion_mode: terms}}
+  - {key: transportation, name: Transportation, criticality: medium, done_when: [transportation plan confirmed or not applicable], evaluation: {task_keywords: [transportation, ride, carpool, parking], completion_terms: [confirmed, arranged], completion_mode: terms}}
+  - {key: budget, name: Budget, criticality: medium, done_when: [budget approved], evaluation: {event_fields: [funding_status], task_keywords: [budget, funding], completion_terms: [approved], completion_mode: terms}}
+  - {key: safety, name: Safety / accessibility, required: true, criticality: high, dependencies: [venue, activity], done_when: [accessibility and safety concerns checked], evaluation: {task_keywords: [safety, accessibility], completion_terms: [checked, confirmed], completion_mode: terms}}
+  - {key: backup_plan, name: Backup plan, criticality: medium, dependencies: [venue, activity], done_when: [weather or cancellation fallback documented], evaluation: {task_keywords: [backup plan, rain plan, fallback], completion_terms: [documented, ready], completion_mode: terms}}

@@ -1,0 +1,277 @@
+key: ideathon
+name: Ideathon / Hackathon
+event_type: ideathon
+version: "1"
+detection_keywords: [ideathon, hackathon, innovation challenge, coding challenge]
+requirements:
+  - key: event_goal
+    name: Event goal
+    required: true
+    criticality: high
+    ideal_lead_days: 45
+    minimum_lead_days: 21
+    done_when: [goal and intended outcome are documented]
+    evaluation: {event_fields: [decision], task_keywords: [goal, objective]}
+  - key: challenge_prompt
+    name: Challenge prompt
+    required: true
+    criticality: critical
+    ideal_lead_days: 30
+    minimum_lead_days: 14
+    dependencies: [event_goal]
+    done_when: [final prompt is approved and distributable]
+    evaluation: {task_keywords: [challenge prompt, prompt], completion_terms: [approved, final], completion_mode: terms}
+  - key: sponsor_confirmation
+    name: Sponsor confirmation
+    criticality: high
+    ideal_lead_days: 45
+    minimum_lead_days: 21
+    sponsor_dependent: true
+    done_when: [sponsor participation and contact are confirmed]
+    evaluation: {event_fields: [sponsor], task_keywords: [sponsor], completion_terms: [confirmed], completion_mode: terms}
+  - key: venue
+    name: Venue
+    required: true
+    criticality: critical
+    ideal_lead_days: 30
+    minimum_lead_days: 14
+    done_when: [room reservation is confirmed]
+    evaluation: {event_fields: [location], task_keywords: [room, venue]}
+  - key: event_date_time
+    name: Date and time
+    required: true
+    criticality: critical
+    ideal_lead_days: 45
+    minimum_lead_days: 21
+    done_when: [exact start and end time are confirmed]
+    evaluation: {event_fields: [event_date_time]}
+  - key: room_capacity
+    name: Room capacity
+    required: true
+    criticality: high
+    ideal_lead_days: 21
+    minimum_lead_days: 10
+    dependencies: [venue]
+    done_when: [capacity supports the attendance target]
+    evaluation: {task_keywords: [capacity, attendance target], completion_terms: [confirmed, supports], completion_mode: terms}
+  - key: registration
+    name: Registration
+    required: true
+    criticality: high
+    ideal_lead_days: 21
+    minimum_lead_days: 10
+    dependencies: [event_date_time, venue]
+    done_when: [registration link is live and tested]
+    evaluation: {event_fields: [registration], task_keywords: [registration, RSVP], completion_terms: [live, open, tested], completion_mode: terms}
+  - key: participant_eligibility
+    name: Participant eligibility
+    required: true
+    criticality: medium
+    ideal_lead_days: 21
+    minimum_lead_days: 10
+    done_when: [eligibility rules are published]
+    evaluation: {task_keywords: [eligibility], completion_terms: [published, final], completion_mode: terms}
+  - key: team_formation
+    name: Team formation rules
+    required: true
+    criticality: high
+    ideal_lead_days: 14
+    minimum_lead_days: 7
+    dependencies: [participant_eligibility]
+    done_when: [team size and formation process are published]
+    evaluation: {task_keywords: [team formation, team size], completion_terms: [published, final], completion_mode: terms}
+  - key: judging_criteria
+    name: Judging criteria
+    required: true
+    criticality: critical
+    ideal_lead_days: 21
+    minimum_lead_days: 10
+    dependencies: [challenge_prompt]
+    done_when: [criteria are approved]
+    evaluation: {task_keywords: [judging criteria, criteria], completion_terms: [approved, final], completion_mode: terms}
+  - key: judging_rubric
+    name: Judging rubric
+    required: true
+    criticality: critical
+    ideal_lead_days: 14
+    minimum_lead_days: 7
+    dependencies: [judging_criteria]
+    done_when: [scored rubric is finalized and shared with judges]
+    evaluation: {task_keywords: [rubric], completion_terms: [final, shared, sent], completion_mode: terms}
+  - key: judges
+    name: Judges
+    required: true
+    criticality: critical
+    typical_owner: Outreach / Execs
+    ideal_lead_days: 21
+    minimum_lead_days: 10
+    dependencies: [event_date_time, challenge_prompt, judging_criteria]
+    done_when: [target judge count is confirmed, availability is confirmed, instructions are sent]
+    common_failure_modes: [outreach starts too late]
+    evidence_expected: [confirmed judge count, instructions sent]
+    next_step: Begin judge outreach and confirm the target judge count before finalizing judging logistics.
+    evaluation: {event_fields: [judges_speakers], task_keywords: [judge], completion_terms: [confirmed, instructions], completion_mode: terms}
+  - key: prizes
+    name: Prizes
+    required: true
+    criticality: high
+    ideal_lead_days: 21
+    minimum_lead_days: 10
+    dependencies: [sponsor_confirmation]
+    done_when: [prize amounts and delivery method are approved]
+    evaluation: {task_keywords: [prize], completion_terms: [approved, confirmed], completion_mode: terms}
+  - key: sponsor_branding
+    name: Sponsor branding
+    criticality: medium
+    sponsor_dependent: true
+    ideal_lead_days: 14
+    minimum_lead_days: 7
+    dependencies: [sponsor_confirmation]
+    done_when: [approved logos and placement requirements are available]
+    evaluation: {task_keywords: [branding, logo], completion_terms: [approved, received], completion_mode: terms}
+  - key: food
+    name: Food
+    criticality: medium
+    ideal_lead_days: 14
+    minimum_lead_days: 7
+    done_when: [order, quantity, delivery time, and payment are confirmed]
+    evaluation: {event_fields: [food], task_keywords: [food, catering], completion_terms: [confirmed, ordered], completion_mode: terms}
+  - key: dietary_needs
+    name: Dietary considerations
+    criticality: medium
+    ideal_lead_days: 10
+    minimum_lead_days: 5
+    dependencies: [food, registration]
+    done_when: [dietary needs are collected and covered]
+    evaluation: {task_keywords: [dietary, allergy], completion_terms: [covered, confirmed], completion_mode: terms}
+  - key: check_in
+    name: Check-in
+    required: true
+    criticality: medium
+    ideal_lead_days: 7
+    minimum_lead_days: 3
+    dependencies: [registration]
+    done_when: [check-in owner, list, and process are ready]
+    evaluation: {task_keywords: [check-in, check in], completion_mode: task_completed}
+  - key: volunteers
+    name: Volunteers
+    required: true
+    criticality: high
+    ideal_lead_days: 14
+    minimum_lead_days: 7
+    done_when: [roles and shifts are assigned]
+    evaluation: {event_fields: [volunteers], task_keywords: [volunteer], completion_terms: [assigned, confirmed], completion_mode: terms}
+  - key: host
+    name: MC / host
+    required: true
+    criticality: medium
+    ideal_lead_days: 10
+    minimum_lead_days: 5
+    done_when: [host is confirmed and has the run-of-show]
+    evaluation: {task_keywords: [MC, host], completion_terms: [confirmed], completion_mode: terms}
+  - key: av_setup
+    name: AV and presentation setup
+    required: true
+    criticality: high
+    ideal_lead_days: 10
+    minimum_lead_days: 3
+    dependencies: [venue]
+    done_when: [display, audio, adapters, and presentation flow are tested]
+    evaluation: {task_keywords: [AV, projector, microphone, presentation setup], completion_terms: [tested, confirmed], completion_mode: terms}
+  - key: wifi_power
+    name: Wi-Fi and power
+    required: true
+    criticality: high
+    ideal_lead_days: 14
+    minimum_lead_days: 5
+    dependencies: [venue]
+    done_when: [network access and adequate power are verified]
+    evaluation: {task_keywords: [wifi, wi-fi, power, outlets], completion_terms: [verified, tested], completion_mode: terms}
+  - key: event_schedule
+    name: Event schedule
+    required: true
+    criticality: critical
+    ideal_lead_days: 14
+    minimum_lead_days: 7
+    dependencies: [event_date_time, challenge_prompt]
+    done_when: [complete run-of-show is published]
+    evaluation: {task_keywords: [schedule, run of show, run-of-show], completion_terms: [final, published], completion_mode: terms}
+  - key: work_period
+    name: Work period
+    required: true
+    criticality: medium
+    dependencies: [event_schedule]
+    done_when: [work time and support checkpoints are scheduled]
+    evaluation: {task_keywords: [work period, hacking time], completion_mode: task_completed}
+  - key: submission_process
+    name: Submission process
+    required: true
+    criticality: high
+    ideal_lead_days: 10
+    minimum_lead_days: 5
+    dependencies: [challenge_prompt]
+    done_when: [submission form, deadline, and required artifacts are tested]
+    evaluation: {task_keywords: [submission], completion_terms: [tested, live, final], completion_mode: terms}
+  - key: demo_process
+    name: Demo / pitch process
+    required: true
+    criticality: high
+    ideal_lead_days: 10
+    minimum_lead_days: 5
+    dependencies: [submission_process, judging_criteria]
+    done_when: [pitch length, order, and setup are documented]
+    evaluation: {task_keywords: [demo, pitch], completion_terms: [final, documented], completion_mode: terms}
+  - key: judging_logistics
+    name: Judging logistics
+    required: true
+    criticality: critical
+    ideal_lead_days: 10
+    minimum_lead_days: 5
+    dependencies: [judges, judging_rubric, demo_process]
+    done_when: [judge assignments, scoring collection, and deliberation are planned]
+    evaluation: {task_keywords: [judging logistics, scoring], completion_mode: task_completed}
+  - key: tie_breaking
+    name: Tie-breaking rules
+    criticality: medium
+    dependencies: [judging_rubric]
+    done_when: [tie-breaking rule is documented]
+    evaluation: {task_keywords: [tie break, tie-break], completion_terms: [documented, final], completion_mode: terms}
+  - key: photography
+    name: Photography / media
+    criticality: low
+    sponsor_dependent: true
+    done_when: [owner, consent approach, and delivery plan are confirmed]
+    evaluation: {task_keywords: [photo, photography, media], completion_mode: task_completed}
+  - key: backup_plan
+    name: Emergency / backup plan
+    required: true
+    criticality: high
+    ideal_lead_days: 7
+    minimum_lead_days: 2
+    dependencies: [venue, av_setup]
+    done_when: [venue, technology, and staffing contingencies are documented]
+    evaluation: {task_keywords: [backup plan, contingency, emergency], completion_terms: [documented, final], completion_mode: terms}
+  - key: sponsor_follow_up
+    name: Post-event sponsor follow-up
+    criticality: medium
+    sponsor_dependent: true
+    dependencies: [sponsor_confirmation]
+    done_when: [recap and promised deliverables are sent]
+    evaluation: {task_keywords: [sponsor follow-up, sponsor recap], completion_terms: [sent, complete], completion_mode: terms}
+  - key: attendee_feedback
+    name: Attendee feedback
+    criticality: low
+    done_when: [feedback form and distribution plan are ready]
+    evaluation: {task_keywords: [feedback, survey], completion_terms: [ready, sent], completion_mode: terms}
+  - key: winner_communication
+    name: Winner communication
+    required: true
+    criticality: medium
+    dependencies: [judging_logistics, prizes]
+    done_when: [winner announcement and direct notification are prepared]
+    evaluation: {task_keywords: [winner announcement, winner communication], completion_mode: task_completed}
+  - key: expense_follow_up
+    name: Reimbursement / expense follow-up
+    criticality: medium
+    done_when: [receipts and reimbursement owners are documented]
+    evaluation: {task_keywords: [reimbursement, expense, receipt], completion_mode: task_completed}

@@ -1,0 +1,25 @@
+key: panel
+name: Panel
+event_type: panel
+version: "1"
+detection_keywords: [panel, panel discussion, fireside chat]
+requirements:
+  - {key: topic, name: Topic, required: true, criticality: high, ideal_lead_days: 30, minimum_lead_days: 14, done_when: [topic and objectives are approved], evaluation: {task_keywords: [panel topic, objectives], completion_terms: [approved, final], completion_mode: terms}}
+  - {key: panelists, name: Panelists, required: true, criticality: critical, ideal_lead_days: 30, minimum_lead_days: 14, done_when: [target panelists confirmed], evaluation: {event_fields: [judges_speakers], task_keywords: [panelist], completion_terms: [confirmed], completion_mode: terms}}
+  - {key: moderator, name: Moderator, required: true, criticality: high, ideal_lead_days: 21, minimum_lead_days: 10, done_when: [moderator confirmed], evaluation: {task_keywords: [moderator], completion_terms: [confirmed], completion_mode: terms}}
+  - {key: moderator_prep, name: Moderator prep, required: true, criticality: high, ideal_lead_days: 10, minimum_lead_days: 5, dependencies: [moderator, panel_questions], done_when: [moderator briefing completed], evaluation: {task_keywords: [moderator prep, moderator briefing], completion_mode: task_completed}}
+  - {key: panel_questions, name: Panel questions, required: true, criticality: high, ideal_lead_days: 14, minimum_lead_days: 7, dependencies: [topic], done_when: [question set approved], evaluation: {task_keywords: [panel questions, questions], completion_terms: [approved, final], completion_mode: terms}}
+  - {key: introductions, name: Introductions, required: true, criticality: medium, dependencies: [panelists], done_when: [bios and pronunciations prepared], evaluation: {task_keywords: [introductions, bios, pronunciation], completion_mode: task_completed}}
+  - {key: venue, name: Room, required: true, criticality: critical, ideal_lead_days: 21, minimum_lead_days: 10, done_when: [room confirmed], evaluation: {event_fields: [location], task_keywords: [room, venue]}}
+  - {key: av, name: AV, required: true, criticality: high, dependencies: [venue], done_when: [display and audio tested], evaluation: {task_keywords: [AV, projector, audio], completion_terms: [tested], completion_mode: terms}}
+  - {key: microphones, name: Microphones, required: true, criticality: high, dependencies: [av], done_when: [enough microphones tested], evaluation: {task_keywords: [microphone, mic], completion_terms: [tested, confirmed], completion_mode: terms}}
+  - {key: registration, name: Registration, criticality: medium, ideal_lead_days: 14, minimum_lead_days: 7, done_when: [registration is live], evaluation: {event_fields: [registration], task_keywords: [registration, RSVP], completion_terms: [live, open], completion_mode: terms}}
+  - {key: attendance_target, name: Attendance target, criticality: medium, done_when: [target documented], evaluation: {task_keywords: [attendance target, capacity], completion_mode: task_completed}}
+  - {key: marketing, name: Marketing, required: true, criticality: high, ideal_lead_days: 21, minimum_lead_days: 10, dependencies: [topic, panelists], done_when: [campaign published], evaluation: {event_fields: [marketing], task_keywords: [marketing, flyer, promotion], completion_terms: [published, posted, launched], completion_mode: terms}}
+  - {key: food, name: Food, criticality: low, done_when: [order and dietary coverage confirmed], evaluation: {event_fields: [food], task_keywords: [food, catering], completion_terms: [confirmed, ordered], completion_mode: terms}}
+  - {key: audience_qa, name: Audience Q&A, required: true, criticality: medium, dependencies: [panel_questions], done_when: [Q&A format and moderation are planned], evaluation: {task_keywords: [Q&A, audience questions], completion_mode: task_completed}}
+  - {key: run_of_show, name: Timing / run-of-show, required: true, criticality: critical, ideal_lead_days: 10, minimum_lead_days: 5, dependencies: [panelists, moderator], done_when: [timed run-of-show shared], evaluation: {task_keywords: [run of show, run-of-show, schedule], completion_terms: [shared, final], completion_mode: terms}}
+  - {key: arrival_instructions, name: Panelist arrival instructions, required: true, criticality: medium, dependencies: [panelists, venue], done_when: [arrival and parking details sent], evaluation: {task_keywords: [arrival instructions, parking], completion_terms: [sent], completion_mode: terms}}
+  - {key: volunteers, name: Volunteer roles, criticality: medium, done_when: [roles assigned], evaluation: {event_fields: [volunteers], task_keywords: [volunteer], completion_terms: [assigned], completion_mode: terms}}
+  - {key: photography, name: Photography, criticality: low, done_when: [coverage owner confirmed], evaluation: {task_keywords: [photo, photography], completion_mode: task_completed}}
+  - {key: follow_up, name: Thank-you / follow-up, required: true, criticality: medium, dependencies: [panelists], done_when: [thank-you messages and resources sent], evaluation: {task_keywords: [thank you, follow-up], completion_terms: [sent], completion_mode: terms}}

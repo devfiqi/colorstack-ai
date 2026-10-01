@@ -1,0 +1,23 @@
+key: networking
+name: Networking Event
+event_type: networking
+version: "1"
+detection_keywords: [networking, mixer, career fair, meet and greet]
+requirements:
+  - {key: audience, name: Audience, required: true, criticality: high, ideal_lead_days: 30, minimum_lead_days: 14, done_when: [target audience documented], evaluation: {task_keywords: [audience, attendee demographics], completion_mode: task_completed}}
+  - {key: guests, name: Companies / guests, required: true, criticality: critical, ideal_lead_days: 30, minimum_lead_days: 14, done_when: [target guests confirmed], evaluation: {event_fields: [judges_speakers], task_keywords: [company guest, recruiter, guest], completion_terms: [confirmed], completion_mode: terms}}
+  - {key: outreach, name: Outreach, required: true, criticality: high, ideal_lead_days: 30, minimum_lead_days: 14, dependencies: [audience], done_when: [outreach list contacted], evaluation: {task_keywords: [outreach, invite], completion_terms: [sent, contacted], completion_mode: terms}}
+  - {key: confirmed_attendees, name: Confirmed attendees, required: true, criticality: high, dependencies: [outreach], done_when: [guest and attendee confirmations tracked], evaluation: {task_keywords: [confirmed attendees, RSVP count], completion_terms: [confirmed, tracked], completion_mode: terms}}
+  - {key: venue, name: Venue, required: true, criticality: critical, ideal_lead_days: 21, minimum_lead_days: 10, done_when: [venue confirmed], evaluation: {event_fields: [location], task_keywords: [venue, room]}}
+  - {key: capacity, name: Capacity, required: true, criticality: high, dependencies: [venue], done_when: [capacity supports audience target], evaluation: {task_keywords: [capacity], completion_terms: [confirmed, supports], completion_mode: terms}}
+  - {key: registration, name: Registration, required: true, criticality: high, dependencies: [venue], done_when: [registration live], evaluation: {event_fields: [registration], task_keywords: [registration, RSVP], completion_terms: [live, open], completion_mode: terms}}
+  - {key: name_tags, name: Name tags, required: true, criticality: medium, dependencies: [registration], done_when: [name tag process and supplies ready], evaluation: {task_keywords: [name tag, badge], completion_terms: [ready, printed], completion_mode: terms}}
+  - {key: check_in, name: Check-in, required: true, criticality: medium, dependencies: [registration], done_when: [check-in station and owner ready], evaluation: {task_keywords: [check-in, check in], completion_mode: task_completed}}
+  - {key: food_drinks, name: Food and drinks, criticality: medium, done_when: [order and delivery confirmed], evaluation: {event_fields: [food], task_keywords: [food, drinks, catering], completion_terms: [confirmed, ordered], completion_mode: terms}}
+  - {key: dietary_needs, name: Dietary needs, criticality: medium, dependencies: [food_drinks, registration], done_when: [dietary needs covered], evaluation: {task_keywords: [dietary, allergy], completion_terms: [covered, confirmed], completion_mode: terms}}
+  - {key: conversation_format, name: Conversation format, required: true, criticality: high, dependencies: [audience, guests], done_when: [rotation or open-networking format documented], evaluation: {task_keywords: [conversation format, rotation, networking format], completion_terms: [documented, final], completion_mode: terms}}
+  - {key: icebreakers, name: Icebreakers, criticality: low, dependencies: [conversation_format], done_when: [prompts or activities ready], evaluation: {task_keywords: [icebreaker], completion_terms: [ready, final], completion_mode: terms}}
+  - {key: sponsor_visibility, name: Sponsor visibility, criticality: medium, sponsor_dependent: true, done_when: [approved sponsor visibility delivered], evaluation: {task_keywords: [sponsor visibility, branding, logo], completion_terms: [approved, ready], completion_mode: terms}}
+  - {key: volunteers, name: Volunteer roles, required: true, criticality: medium, done_when: [roles assigned], evaluation: {event_fields: [volunteers], task_keywords: [volunteer], completion_terms: [assigned], completion_mode: terms}}
+  - {key: photography, name: Photography, criticality: low, done_when: [coverage owner confirmed], evaluation: {task_keywords: [photo, photography], completion_mode: task_completed}}
+  - {key: follow_up, name: Follow-up, required: true, criticality: medium, dependencies: [confirmed_attendees], done_when: [contacts and thank-you resources sent], evaluation: {task_keywords: [follow-up, thank you], completion_terms: [sent], completion_mode: terms}}
