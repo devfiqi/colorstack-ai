@@ -14,11 +14,21 @@ Status: implemented.
 
 ## Phase 2 — Durable structured storage
 
-- Define retention and relevance rules before discarding raw data.
-- Replace or supplement JSONL with a queryable store.
-- Preserve source-message references and edit/delete history.
-- Add migrations, recovery procedures, and storage-level tests.
-- Keep Discord content local unless an explicit policy changes that constraint.
+Status: implemented and manually verified.
+
+- PostgreSQL is the durable, queryable raw archive.
+- SQLAlchemy models and Alembic migrations define the schema.
+- Backfills are resumable and idempotent by Discord message ID.
+- Edits update existing rows; deletes preserve content through soft deletion.
+- Attachments and reaction snapshots use related tables.
+- Integration tests cover duplicates, edits, related records, and deletions.
+- Discord content remains local.
+
+Deferred operational work:
+
+- Define backup and restore procedures.
+- Define retention and relevance rules before discarding any raw data.
+- Evaluate batching only if message volume makes per-message transactions slow.
 
 ## Phase 3 — Local extraction
 

@@ -1,7 +1,7 @@
 # Architecture
 
 ColorStack AI converts Discord activity into durable organizational context.
-Only the ingestion and local raw-storage layers are implemented today.
+The ingestion and local PostgreSQL archive are implemented today.
 
 ## System flow
 
@@ -10,7 +10,7 @@ Discord
   ↓
 Ingestion                         implemented
   ↓
-Raw message storage              implemented locally
+Raw PostgreSQL archive           implemented locally
   ↓
 Local LLM extraction             planned
   ↓
@@ -30,7 +30,11 @@ Executive briefs and answers     planned
 - `discord/listeners.py` handles live creates, edits, and deletions.
 - `ingestion/normalize.py` converts Discord objects into internal models.
 - `ingestion/models.py` defines the normalized Pydantic records.
-- `ingestion/store.py` defines the persistence boundary and local JSONL store.
+- `ingestion/store.py` defines the persistence boundary.
+- `ingestion/postgres_store.py` implements transactional PostgreSQL persistence.
+- `db/models.py` defines the SQLAlchemy archive schema.
+- `db/session.py` owns the async engine and session factory.
+- `alembic/` contains the versioned database migrations.
 
 ## Runtime flow
 
@@ -38,7 +42,7 @@ Executive briefs and answers     planned
 2. Connect with guild, message, member, and message-content intents.
 3. Discover readable text channels and active or archived threads.
 4. Backfill each channel independently; a channel failure does not stop others.
-5. Deduplicate historical messages by Discord message ID.
+5. Upsert messages and related snapshots by Discord message ID.
 6. Continue processing live creates, raw edits, and deletion events.
 
 The event handlers are active during backfill, preventing a gap between history
@@ -47,11 +51,13 @@ collection and live ingestion.
 ## Storage boundary
 
 `MessageStore` isolates Discord ingestion from persistence. Phase 1 uses the
-append-only `data/discord-messages.jsonl` file. A future database implementation
-can replace it without changing channel discovery, normalization, or listeners.
+append-only JSONL verification store; Phase 2 makes `PostgresMessageStore` the
+runtime default without changing discovery, normalization, or listeners.
 
-Raw messages remain the source of truth. Updates append a new snapshot, and
-deletions append tombstones rather than removing prior records.
+PostgreSQL is the durable raw source of truth. Message IDs are primary keys,
+edits update the existing row and related snapshots, and deletions set a flag
+and timestamp rather than removing data. Attachments and reactions are separate
+tables tied to messages with cascading foreign keys.
 
 ## Planned layers
 

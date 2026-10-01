@@ -1,67 +1,54 @@
 # Data model
 
-Phase 1 writes newline-delimited JSON to
-`data/discord-messages.jsonl`. Each line is an immutable operation record.
-Field names use camel case in serialized output.
+PostgreSQL stores the normalized Phase 1 records. Discord snowflakes are kept as
+strings to avoid platform integer assumptions.
 
-## Upsert operation
+## `messages`
 
-```json
-{
-  "operation": "upsert",
-  "recordedAt": "2026-09-30T23:28:56.135000+00:00",
-  "message": {
-    "id": "123",
-    "guildId": "456",
-    "channelId": "789",
-    "channelName": "events",
-    "threadId": null,
-    "authorId": "321",
-    "username": "member",
-    "displayName": "Member",
-    "content": "Message text",
-    "createdAt": "2026-09-30T22:00:00Z",
-    "editedAt": null,
-    "replyToMessageId": null,
-    "attachments": [],
-    "reactions": []
-  }
-}
-```
+- `id`: primary key and Discord message ID.
+- `guild_id`: source guild ID.
+- `channel_id`, `channel_name`: source channel snapshot.
+- `thread_id`: thread ID when the source channel is a thread.
+- `author_id`, `username`, `display_name`: author snapshot.
+- `content`: raw text available through the Message Content intent.
+- `created_at`, `edited_at`: Discord timestamps.
+- `reply_to_message_id`: referenced Discord message ID.
+- `is_deleted`, `deleted_at`: soft-deletion state.
+- `ingested_at`: first database insertion time.
+- `last_updated_at`: latest persisted change time.
 
-Message fields:
+Indexes support common filters on guild, channel, author, creation time, and
+deletion state.
 
-- `id`: Discord message snowflake; the historical deduplication key.
-- `guildId`: Discord guild snowflake, or `null` outside a guild.
-- `channelId` and `channelName`: source channel identity.
-- `threadId`: source thread ID when the channel is a thread.
-- `authorId`, `username`, and `displayName`: author identity snapshot.
-- `content`: message text available through the Message Content intent.
-- `createdAt` and `editedAt`: Discord timestamps.
-- `replyToMessageId`: referenced message ID when the message is a reply.
-- `attachments`: attachment ID, name, URL, content type, and byte size.
-- `reactions`: emoji representation and observed count.
+## `attachments`
 
-## Delete operation
+- `id`: primary key and Discord attachment ID.
+- `message_id`: foreign key to `messages.id`.
+- `name`: filename supplied by Discord.
+- `url`: Discord CDN URL.
+- `content_type`: reported media type.
+- `size`: size in bytes.
 
-```json
-{
-  "operation": "delete",
-  "recordedAt": "2026-09-30T23:30:00+00:00",
-  "deletion": {
-    "id": "123",
-    "guildId": "456",
-    "channelId": "789",
-    "deletedAt": "2026-09-30T23:30:00+00:00"
-  }
-}
-```
+Deleting a message row cascades to its attachments, although normal ingestion
+uses soft deletion and does not remove message rows.
 
-## Semantics
+## `reactions`
 
-- Initial history uses insert-if-absent behavior based on message ID.
-- Live creates and edits append upsert snapshots.
-- Deletes append tombstones and do not erase earlier snapshots.
-- On startup, the local store scans prior upserts to rebuild its known-ID set.
-- Consumers must apply operations in file order to derive the latest state.
-- `recordedAt` is ingestion time; message timestamps come from Discord.
+- `message_id`: foreign key to `messages.id`.
+- `emoji`: Unicode emoji or custom emoji representation.
+- `count`: observed reaction count.
+
+The primary key is `(message_id, emoji)`.
+
+## Persistence semantics
+
+- Backfill inserts a message only when its Discord ID is new.
+- Existing messages are compared and updated only when normalized data differs.
+- Attachment and reaction sets are replaced only when their snapshots differ.
+- Live edits update the same message row.
+- Deletes mark the existing row; they never remove raw message content.
+- Each message operation is transactional across the message and related rows.
+- PostgreSQL is the current source of truth.
+
+The former JSONL operation format remains available only through the optional
+test/development store; it is not the runtime persistence path.

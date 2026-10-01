@@ -19,11 +19,12 @@ format. Phase 2 can introduce a durable store without rewriting Discord logic.
 
 ## 003 — Append-only local verification storage
 
-Status: accepted for Phase 1.
+Status: superseded as the runtime default after Phase 1.
 
 Use JSONL upserts and deletion tombstones. This preserves edit history, supports
 simple inspection, and avoids pretending the verification file is a database.
-It is not intended for concurrent writers or complex queries.
+The implementation remains useful for lightweight tests but is not the durable
+source of truth.
 
 ## 004 — Preserve bot messages
 
@@ -55,3 +56,20 @@ Status: accepted.
 Raw records stay in the Git-ignored `data/` directory. No application component
 uploads messages to GitHub, an AI provider, or an external database. Any future
 external processing requires a deliberate security and privacy decision.
+
+## 008 — PostgreSQL as the durable raw archive
+
+Status: accepted for Phase 2.
+
+Use local PostgreSQL with SQLAlchemy, `psycopg`, and Alembic. Message IDs are
+stable primary keys, edits update existing rows, and deletes are soft. This
+provides queryability and transactional persistence without changing Discord
+ingestion.
+
+## 009 — Store current related snapshots
+
+Status: accepted for Phase 2.
+
+Attachments and reactions use separate tables. Each message upsert synchronizes
+the current sets only when they differ. Phase 2 does not preserve a revision row
+for every historical attachment or reaction change.

@@ -1,8 +1,8 @@
 # Phase 1: Discord ingestion
 
 Phase 1 establishes a reliable, AI-free ingestion layer. It reads Discord,
-normalizes message records, stores them locally, and stays connected for live
-changes.
+normalizes message records, passes them through the storage abstraction, and
+stays connected for live changes.
 
 ## Behavior
 
@@ -41,20 +41,22 @@ python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -e .
 cp .env.example .env
+alembic upgrade head
 python -m colorstack_ai
 ```
 
-Add the token to `.env` without committing or sharing it.
+Add the token and local PostgreSQL URL to `.env` without committing or sharing
+them.
 
 Successful startup identifies the bot and guilds, reports per-channel backfill
 progress, prints final totals, and then logs that it is listening for changes.
 
 ## Verification
 
-- Confirm `data/discord-messages.jsonl` is created.
-- Restart after a completed backfill; existing history should report as known.
+- Confirm message rows appear in PostgreSQL.
+- Restart after a completed backfill; the message row count should not double.
 - Create, edit, and delete a test message in an accessible channel.
-- Confirm matching upsert and deletion records are appended.
+- Confirm the same row is updated and then marked deleted.
 - Run `python -m unittest discover -s tests -v`.
 
 ## Limitations
@@ -62,6 +64,7 @@ progress, prints final totals, and then logs that it is listening for changes.
 - Discord cannot return already-deleted or inaccessible history.
 - Reaction counts are snapshots; reaction-only changes are not live events.
 - Display names may be absent when Discord does not provide member data.
-- JSONL is for one local process and is not a production query engine.
+- Persistence details are documented separately in
+  [Phase 2](phase-2.md).
 - No AI extraction, organizational memory, reporting, API, or dashboard exists
   in this phase.

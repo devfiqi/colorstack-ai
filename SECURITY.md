@@ -13,11 +13,12 @@ message archive as sensitive organizational data.
 
 ## Local data
 
-- Raw messages are stored in `data/discord-messages.jsonl`.
-- `data/` is Git-ignored and must remain local.
+- Raw messages are stored in the local `colorstack_ai` PostgreSQL database.
+- PostgreSQL listens on localhost and is not externally hosted.
+- The retired JSONL archive in `data/`, if retained, remains Git-ignored.
 - Do not attach the archive to issues, pull requests, or support requests.
 - Use full-disk encryption and normal OS account protections on the host.
-- Backups containing the archive must follow the same access restrictions.
+- Database dumps and backups must follow the same access restrictions.
 
 ## Discord access
 
