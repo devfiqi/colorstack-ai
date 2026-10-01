@@ -194,3 +194,24 @@ Pydantic packages include:
 
 Every item preserves available event, task, fact, message, and timestamp
 provenance. Collection limits are configuration, not persisted state.
+
+## Phase 7 reasoning usage
+
+`reasoning_usage` records the provider, model, mode, scope, intent, prompt
+version, bounded-context statistics, request status, token usage, latency,
+estimated cost, provider request ID, and sanitized errors. Briefing references
+this record rather than maintaining a second usage ledger.
+
+## Phase 8 daily brief runs
+
+`daily_brief_runs` records scheduled date, lifecycle status, channel, Discord
+message IDs, reasoning usage, generated payload, rendered text, failure stage,
+sanitized error, and whether the run was manual. A partial unique index on
+scheduled date for non-manual runs prevents duplicate scheduled delivery while
+allowing repeated manual previews and sends.
+
+## Phase 10 dashboard
+
+Phase 10 adds no database tables. FastAPI returns typed, read-only projections
+over existing event, task, state, playbook, reasoning, and briefing records.
+The frontend stores no independent organizational truth.

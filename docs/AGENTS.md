@@ -6,7 +6,7 @@ These rules apply to automated coding work in this repository.
 
 - Preserve Discord ingestion, PostgreSQL archival, local Ollama extraction,
   state reconciliation, event-playbook, and context-retrieval behavior.
-- Do not begin Phase 7 unless explicitly requested.
+- Preserve Phase 7 reasoning, Phase 8 briefs, and the Phase 10 local dashboard.
 - Keep raw Discord messages as the local source of truth.
 - Keep persistence and model boundaries replaceable.
 
@@ -15,7 +15,8 @@ These rules apply to automated coding work in this repository.
 - Never commit `.env`, tokens, credentials, Discord data, database dumps, or
   copied private conversations.
 - Keep Discord data, PostgreSQL, and Ollama processing local.
-- Do not send Discord content to external APIs.
+- Do not send the full Discord archive or unrelated conversations externally.
+  The approved reasoning provider may receive only bounded Phase 6 context.
 - Follow [SECURITY.md](SECURITY.md) and
   [BOT_PERMISSIONS.md](BOT_PERMISSIONS.md).
 

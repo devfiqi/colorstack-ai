@@ -43,10 +43,13 @@ message archive as sensitive organizational data.
 ## Dependency and code changes
 
 - Review dependency updates before merging.
-- Keep extraction and reasoning local unless leadership explicitly approves an
-  external processor and its data-handling terms.
-- Any future API or dashboard must add authentication, authorization, audit
-  logging, and data-retention controls before deployment.
+- Keep extraction local. Reasoning may use the explicitly approved provider
+  only with bounded Phase 6 context; never send the full archive or unrelated
+  conversations.
+- Keep the dashboard API bound to loopback unless authentication,
+  authorization, and deployment controls are added first.
+- Any hosted or non-loopback API/dashboard deployment must add authentication,
+  authorization, audit logging, and data-retention controls first.
 
 ## Reporting a security issue
 

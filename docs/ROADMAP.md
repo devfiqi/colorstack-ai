@@ -120,11 +120,40 @@ Deferred improvements:
 
 ## Phase 7 — Reasoning
 
+Status: implemented.
+
 - Consume structured context packages without direct unrestricted database
   access.
 - Answer leadership questions with source-linked claims.
 - Preserve uncertainty and distinguish facts from inferred gaps.
 - Add evaluation and approval controls before producing operational advice.
+
+## Phase 8 — Daily executive brief
+
+Status: implemented; production channel verification remains operational.
+
+- Build 24-hour organization context with unresolved carryover.
+- Reuse tracked Phase 7 reasoning and cost accounting.
+- Format concise Discord-safe executive briefs.
+- Prevent duplicate scheduled delivery with a database constraint.
+- Support preview, manual send, and timezone-aware scheduling.
+
+## Phase 9 — Interactive AI
+
+Status: intentionally skipped.
+
+No `/ask`, bot mentions, or dashboard Q&A is enabled.
+
+## Phase 10 — Local operations dashboard
+
+Status: implemented and automatically verified.
+
+- Import the existing React dashboard without redesigning it.
+- Replace centralized mock data with typed FastAPI queries.
+- Expose read-only overview, event, task, person, activity, brief, playbook,
+  and system endpoints.
+- Run the API and frontend locally on ports 8000 and 5173.
+- Preserve Phase 1–8 service and persistence boundaries.
 
 ## Later — Reporting and learning
 
@@ -136,6 +165,5 @@ Deferred improvements:
 
 ## Not included yet
 
-Reasoning, historical learning, embeddings, vector search, dashboards,
-scheduled reports, and external data sharing remain outside the current
-implementation.
+Interactive AI, historical learning, embeddings, vector search, dashboard
+writes, and hosted deployment remain outside the current implementation.

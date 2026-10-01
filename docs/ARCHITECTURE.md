@@ -4,7 +4,9 @@ ColorStack AI converts Discord activity into durable organizational context.
 Ingestion, the local PostgreSQL archive, local fact extraction, and
 organizational state reconciliation are implemented. Phase 5 adds event
 playbooks and evidence-based readiness evaluation. Phase 6 adds bounded,
-question-aware retrieval and structured context assembly.
+question-aware retrieval and structured context assembly. Phase 7 adds tracked
+reasoning, Phase 8 adds scheduled executive briefs, and Phase 10 exposes the
+existing services through a local read-only dashboard API.
 
 ## System flow
 
@@ -25,9 +27,13 @@ Event playbooks and readiness    implemented
   ↓
 Retrieval and context assembly  implemented
   ↓
-Reasoning model                  planned
+Reasoning model                  implemented
   ↓
-Executive briefs and answers     planned
+Daily executive brief            implemented
+  ↓
+FastAPI dashboard API            implemented locally
+  ↓
+React dashboard                  implemented locally
 ```
 
 ## Implemented components
@@ -75,6 +81,14 @@ Executive briefs and answers     planned
   packages.
 - `context/builder.py` provides the Phase 7-facing context boundary.
 - `context/` exposes JSON-producing CLI commands.
+- `reasoning/` runs bounded structured context through the configured provider
+  and records latency, usage, and estimated cost.
+- `briefing/` constructs, formats, schedules, records, and delivers daily
+  executive briefs with duplicate prevention.
+- `api/` maps existing context and persistence services to read-only dashboard
+  endpoints without duplicating state or playbook logic.
+- `frontend/` contains the imported React/TanStack Router dashboard, now backed
+  by FastAPI rather than mock data.
 
 ## Runtime flow
 
@@ -142,7 +156,9 @@ multiple candidates. The retrieval service uses relational links, normalized
 names, SQL filters, provenance, and recency; its interface can accept a vector
 search implementation later without changing context models.
 
-## Planned layers
+## Dashboard boundary
 
-Phase 7 will consume the structured context package with a reasoning model.
-Daily report generation and delivery remain later work.
+Phase 10 is a read-only local projection. FastAPI binds to loopback by default,
+allows only configured local development origins, and exposes overview, event,
+task, person, activity, brief, playbook, and system-health data. It does not
+write organizational state or implement interactive AI.

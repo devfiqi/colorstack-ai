@@ -201,3 +201,35 @@ Status: accepted.
 Context builders retrieve and organize evidence but do not summarize, recommend,
 or answer the user question. Phase 7 receives one typed context package and is
 responsible for reasoning under separate safety and evaluation controls.
+
+## 025 — Hybrid reasoning privacy
+
+Status: accepted for Phase 7.
+
+Keep the raw Discord archive local. The configured reasoning provider may
+receive only bounded Phase 6 context selected for the request. Record usage and
+cost, disable provider-side storage where supported, and never upload the full
+archive or unrelated conversations.
+
+## 026 — Daily briefs reuse reasoning
+
+Status: accepted for Phase 8.
+
+Build briefing inputs deterministically, then reuse the Phase 7 service for
+prioritization. Keep Discord formatting and delivery separate. Claim scheduled
+runs atomically in PostgreSQL so restarts cannot produce duplicate posts.
+
+## 027 — Skip interactive AI
+
+Status: accepted.
+
+Phase 9 is deferred. The dashboard remains read-only and does not expose an
+interactive reasoning endpoint or Discord Q&A.
+
+## 028 — Local API and imported frontend
+
+Status: accepted for Phase 10.
+
+Expose existing application services through a loopback-bound FastAPI API.
+Keep the imported React design and replace its mock-data boundary with typed
+HTTP queries. Do not move state or playbook logic into frontend code.

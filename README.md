@@ -6,12 +6,10 @@ organizational context and proactive executive updates.
 
 ## Current status
 
-Discord ingestion, local PostgreSQL persistence, local fact extraction, and
-versioned organizational-state reconciliation are implemented. Versioned event
-playbooks identify missing work, urgency, and readiness. A bounded retrieval
-layer now assembles source-linked event, task, person, organization, and
-question-aware context. The final reasoning model and executive reports are not
-implemented.
+Phases 1–8 and the Phase 10 local dashboard are implemented. Discord ingestion,
+PostgreSQL persistence, local extraction, organizational state, event
+playbooks, bounded context, cloud reasoning, and daily executive briefs feed a
+read-only FastAPI dashboard. Phase 9 interactive AI is intentionally skipped.
 
 ## System direction
 
@@ -28,7 +26,9 @@ Structured organizational state
   ↓
 Reasoning model
   ↓
-Daily executive brief / on-demand answers
+Daily executive brief
+  ↓
+FastAPI / local dashboard
 ```
 
 ## Local setup
@@ -112,6 +112,30 @@ python -m colorstack_ai.context org
 python -m colorstack_ai.context query "What are we missing for Adobe?"
 ```
 
+Generate or deliver the daily brief:
+
+```bash
+python -m colorstack_ai.briefing preview
+python -m colorstack_ai.briefing generate
+python -m colorstack_ai.briefing send
+python -m colorstack_ai.briefing schedule
+```
+
+Run the local dashboard in two terminals:
+
+```bash
+colorstack-api
+```
+
+```bash
+cd frontend
+bun install
+bun run dev
+```
+
+Open `http://localhost:5173`. FastAPI listens on `http://127.0.0.1:8000`,
+with interactive API documentation at `/docs`.
+
 ## Verification queries
 
 ```bash
@@ -149,10 +173,12 @@ LIMIT 10;
 - [Phase 4 organizational state](docs/phase-4.md)
 - [Phase 5 event playbooks](docs/phase-5.md)
 - [Phase 6 retrieval and context](docs/phase-6.md)
+- [Phase 10 local dashboard](docs/phase-10.md)
 - [Playbook format](docs/playbook-format.md)
 - [Data model](docs/data-model.md)
 - [Technical decisions](docs/decisions.md)
 - [Bot communication policy](docs/BOT_PERMISSIONS.md)
 
-Discord content and credentials remain local. They are excluded from Git and
-are not sent to an AI provider or externally hosted database.
+Raw Discord archives and credentials remain local and excluded from Git. Only
+bounded, relevant Phase 6 context is eligible for the configured reasoning
+provider; the full archive is never sent.
