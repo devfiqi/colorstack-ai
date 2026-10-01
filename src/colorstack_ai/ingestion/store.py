@@ -15,10 +15,6 @@ logger = logging.getLogger(__name__)
 
 class MessageStore(ABC):
     @abstractmethod
-    def has(self, message_id: str) -> bool:
-        pass
-
-    @abstractmethod
     async def insert(self, message: NormalizedDiscordMessage) -> bool:
         pass
 

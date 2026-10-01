@@ -1,17 +1,16 @@
 import asyncio
 import logging
-from pathlib import Path
 
 from colorstack_ai.config import load_environment
 from colorstack_ai.discord.client import DiscordIngestionClient
-from colorstack_ai.ingestion.store import JsonlMessageStore
+from colorstack_ai.ingestion.postgres_store import PostgresMessageStore
 
 
 async def main() -> None:
     environment = load_environment()
-    store = await JsonlMessageStore(
-        Path.cwd() / "data" / "discord-messages.jsonl"
-    ).open()
+    store = await PostgresMessageStore.create(
+        environment.database_url.get_secret_value()
+    )
     client = DiscordIngestionClient(store)
 
     try:

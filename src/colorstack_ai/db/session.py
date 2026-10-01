@@ -23,10 +23,20 @@ class Database:
         try:
             async with self.engine.connect() as connection:
                 await connection.execute(text("SELECT 1"))
+                messages_table = await connection.scalar(
+                    text("SELECT to_regclass('public.messages')")
+                )
+                if messages_table is None:
+                    raise RuntimeError(
+                        "PostgreSQL is reachable, but the messages table is "
+                        "missing. Run `alembic upgrade head`."
+                    )
+        except RuntimeError:
+            raise
         except Exception as error:
             raise RuntimeError(
-                "Could not connect to PostgreSQL. Check DATABASE_URL and run "
-                "`alembic upgrade head`."
+                "Could not connect to PostgreSQL. Check DATABASE_URL and "
+                "confirm the local service is running."
             ) from error
 
     async def close(self) -> None:
