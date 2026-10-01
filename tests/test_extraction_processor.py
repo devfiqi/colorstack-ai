@@ -192,3 +192,39 @@ class ExtractionProcessorTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(summary.processed, 1)
         self.assertEqual(summary.facts_created, 0)
         self.assertEqual(summary.failed, 0)
+
+    async def test_first_person_commitment_resolves_to_speaker(self) -> None:
+        async with self.database.sessions.begin() as session:
+            session.add(
+                message(
+                    "speaker-owner",
+                    "I'll handle food for the event by Friday.",
+                )
+            )
+        response = ExtractionResponse(
+            facts=[
+                FactDraft(
+                    type=FactType.COMMITMENT,
+                    task="Handle food",
+                    deadline_text="Friday",
+                    confidence=0.9,
+                    evidence_kind=EvidenceKind.EXPLICIT,
+                )
+            ]
+        )
+
+        await self.processor(FakeExtractor(response)).process(
+            mode="backfill",
+            limit=None,
+        )
+
+        async with self.database.sessions() as session:
+            fact = await session.scalar(
+                select(ExtractedFactRecord).where(
+                    ExtractedFactRecord.source_message_id == "speaker-owner"
+                )
+            )
+        self.assertIsNotNone(fact)
+        assert fact is not None
+        self.assertEqual(fact.owner_name, "Member")
+        self.assertEqual(fact.owner_discord_id, "author")

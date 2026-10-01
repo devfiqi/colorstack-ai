@@ -1,9 +1,15 @@
 import logging
+import re
 from dataclasses import dataclass
 from typing import Any, Protocol
 
 from colorstack_ai.extraction.context import ContextBuilder
-from colorstack_ai.extraction.models import ExtractionContext, ExtractionResponse
+from colorstack_ai.extraction.models import (
+    ExtractionContext,
+    ExtractionResponse,
+    FactDraft,
+    FactType,
+)
 from colorstack_ai.extraction.prompt import PROMPT_VERSION
 from colorstack_ai.extraction.relevance import assess_relevance
 from colorstack_ai.extraction.repository import (
@@ -12,6 +18,10 @@ from colorstack_ai.extraction.repository import (
 )
 
 logger = logging.getLogger(__name__)
+FIRST_PERSON_COMMITMENT = re.compile(
+    r"\b(?:i(?:'ll| will| can)|i can|i got|i've got)\b",
+    re.IGNORECASE,
+)
 
 
 class FactExtractor(Protocol):
@@ -142,19 +152,23 @@ class ExtractionProcessor:
                 )
                 try:
                     response, raw_output = await self._extractor.extract(context)
+                    facts = self._resolve_speaker_ownership(
+                        context,
+                        response.facts,
+                    )
                     await self._repository.save_success(
                         message_id=context.source_message_id,
                         extraction_version=self._extraction_version,
                         run_id=run_id,
-                        facts=response.facts,
+                        facts=facts,
                         raw_output=raw_output,
                     )
                     summary.processed += 1
-                    summary.facts_created += len(response.facts)
+                    summary.facts_created += len(facts)
                     logger.info(
                         "Message %s produced %d facts",
                         context.source_message_id,
-                        len(response.facts),
+                        len(facts),
                     )
                 except Exception as error:
                     await self._repository.mark_failed(
@@ -204,3 +218,25 @@ class ExtractionProcessor:
     @staticmethod
     def _error_text(error: Exception) -> str:
         return f"{type(error).__name__}: {error}"
+
+    @staticmethod
+    def _resolve_speaker_ownership(
+        context: ExtractionContext,
+        facts: list[FactDraft],
+    ) -> list[FactDraft]:
+        if not FIRST_PERSON_COMMITMENT.search(context.content):
+            return facts
+
+        return [
+            fact.model_copy(
+                update={
+                    "owner_name": context.source_author_name,
+                    "owner_discord_id": context.source_author_id,
+                }
+            )
+            if fact.type == FactType.COMMITMENT
+            and fact.owner_name is None
+            and fact.owner_discord_id is None
+            else fact
+            for fact in facts
+        ]

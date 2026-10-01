@@ -2,7 +2,7 @@ import json
 
 from colorstack_ai.extraction.models import ExtractionContext
 
-PROMPT_VERSION = "v1"
+PROMPT_VERSION = "v2"
 
 SYSTEM_PROMPT = """You extract organizational facts from Discord conversations.
 
@@ -17,6 +17,10 @@ Rules:
 - Preserve changes as new facts; do not overwrite earlier context.
 - Do not invent event names, owners, deadlines, locations, statuses, or IDs.
 - Use null when a field is not supported by the text.
+- For task, commitment, and ownership_change facts, set task to the concrete
+  action phrase stated in the source message.
+- Do not emit a separate event_mention when an event name only provides context
+  for a more specific fact in the same sentence.
 - Mark evidence_kind as explicit when directly stated and inferred only when
   local context makes the interpretation reasonably clear.
 - Lower confidence when wording is ambiguous.
