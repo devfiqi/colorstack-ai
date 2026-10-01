@@ -157,8 +157,15 @@ interface BriefApiResponse {
   };
 }
 
-export async function fetchLatestBrief(): Promise<BriefView> {
-  const response = await request<BriefApiResponse>("/api/briefs/latest");
+export async function fetchLatestBrief(): Promise<BriefView | null> {
+  const apiResponse = await fetch(`${API_URL}/api/briefs/latest`, {
+    headers: { Accept: "application/json" },
+  });
+  if (apiResponse.status === 404) return null;
+  if (!apiResponse.ok) {
+    throw new Error(`API request failed (${apiResponse.status}): /api/briefs/latest`);
+  }
+  const response = (await apiResponse.json()) as BriefApiResponse;
   const sections = [...response.brief.critical_events, ...response.brief.high_events];
   return {
     generated: new Date(response.generated).toLocaleString(),

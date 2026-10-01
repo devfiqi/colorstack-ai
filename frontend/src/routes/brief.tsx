@@ -60,6 +60,18 @@ function BriefPage() {
 
   if (isPending) return <p className="text-sm text-muted-foreground">Loading latest brief…</p>;
   if (error) throw error;
+  if (!brief) {
+    return (
+      <>
+        <PageHeader title="Daily Brief" subtitle="No executive brief has been generated yet" />
+        <Panel title="No brief available">
+          <p className="text-[12.5px] text-muted-foreground">
+            Generate or send a daily brief to make it available here.
+          </p>
+        </Panel>
+      </>
+    );
+  }
 
   return (
     <>
