@@ -1,0 +1,1 @@
+"""Event requirement evaluation CLI."""
