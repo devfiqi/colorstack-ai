@@ -70,6 +70,8 @@ class StateContextItem(BaseModel):
 
 
 class RequirementContextItem(BaseModel):
+    event_id: str | None = None
+    event_name: str | None = None
     requirement_id: str
     playbook: str
     key: str

@@ -1,5 +1,7 @@
 import os
+from datetime import time
 from urllib.parse import urlparse
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from dotenv import load_dotenv
 from pydantic import BaseModel, SecretStr
@@ -20,6 +22,25 @@ class ExtractionEnvironment(BaseModel):
     ollama_model: str
     extraction_version: str
     ollama_timeout_seconds: float
+
+
+class ReasoningEnvironment(BaseModel):
+    database_url: SecretStr
+    provider: str
+    model: str
+    openai_api_key: SecretStr
+    timeout_seconds: float
+    max_context_chars: int
+    max_output_tokens: int
+    input_cost_per_million: float | None
+    output_cost_per_million: float | None
+
+
+class DailyBriefEnvironment(BaseModel):
+    enabled: bool
+    scheduled_time: time
+    timezone: str
+    channel_id: str | None
 
 
 def _load_database_url() -> SecretStr:
@@ -94,4 +115,107 @@ def load_extraction_environment() -> ExtractionEnvironment:
         ollama_model=model,
         extraction_version=extraction_version,
         ollama_timeout_seconds=timeout,
+    )
+
+
+def load_reasoning_environment() -> ReasoningEnvironment:
+    load_dotenv()
+    provider = os.getenv("REASONING_PROVIDER", "openai").strip().casefold()
+    if provider != "openai":
+        raise RuntimeError(
+            "REASONING_PROVIDER must be 'openai'; other providers are not "
+            "implemented yet."
+        )
+    model = os.getenv("REASONING_MODEL", "").strip()
+    if not model:
+        raise RuntimeError("Missing required environment variable REASONING_MODEL.")
+    api_key = os.getenv("OPENAI_API_KEY", "").strip()
+    if not api_key:
+        raise RuntimeError("Missing required environment variable OPENAI_API_KEY.")
+
+    def positive_float(name: str, default: str) -> float:
+        try:
+            value = float(os.getenv(name, default))
+        except ValueError as error:
+            raise RuntimeError(f"{name} must be numeric.") from error
+        if value <= 0:
+            raise RuntimeError(f"{name} must be positive.")
+        return value
+
+    def positive_int(name: str, default: str) -> int:
+        try:
+            value = int(os.getenv(name, default))
+        except ValueError as error:
+            raise RuntimeError(f"{name} must be an integer.") from error
+        if value <= 0:
+            raise RuntimeError(f"{name} must be positive.")
+        return value
+
+    def optional_cost(name: str) -> float | None:
+        raw = os.getenv(name, "").strip()
+        if not raw:
+            return None
+        try:
+            value = float(raw)
+        except ValueError as error:
+            raise RuntimeError(f"{name} must be numeric.") from error
+        if value < 0:
+            raise RuntimeError(f"{name} cannot be negative.")
+        return value
+
+    return ReasoningEnvironment(
+        database_url=_load_database_url(),
+        provider=provider,
+        model=model,
+        openai_api_key=SecretStr(api_key),
+        timeout_seconds=positive_float("REASONING_TIMEOUT_SECONDS", "60"),
+        max_context_chars=positive_int(
+            "REASONING_MAX_CONTEXT_CHARS",
+            "100000",
+        ),
+        max_output_tokens=positive_int(
+            "REASONING_MAX_OUTPUT_TOKENS",
+            "2000",
+        ),
+        input_cost_per_million=optional_cost(
+            "REASONING_INPUT_COST_PER_MILLION"
+        ),
+        output_cost_per_million=optional_cost(
+            "REASONING_OUTPUT_COST_PER_MILLION"
+        ),
+    )
+
+
+def load_daily_brief_environment(
+    *,
+    require_channel: bool = False,
+) -> DailyBriefEnvironment:
+    load_dotenv()
+    enabled_raw = os.getenv("DAILY_BRIEF_ENABLED", "false").strip().casefold()
+    if enabled_raw not in {"true", "false"}:
+        raise RuntimeError("DAILY_BRIEF_ENABLED must be true or false.")
+    time_raw = os.getenv("DAILY_BRIEF_TIME", "08:00").strip()
+    try:
+        hour_text, minute_text = time_raw.split(":", maxsplit=1)
+        scheduled_time = time(hour=int(hour_text), minute=int(minute_text))
+    except (TypeError, ValueError) as error:
+        raise RuntimeError("DAILY_BRIEF_TIME must use 24-hour HH:MM format.") from error
+    timezone = os.getenv(
+        "DAILY_BRIEF_TIMEZONE",
+        "America/Chicago",
+    ).strip()
+    try:
+        ZoneInfo(timezone)
+    except ZoneInfoNotFoundError as error:
+        raise RuntimeError("DAILY_BRIEF_TIMEZONE is not a valid timezone.") from error
+    channel_id = os.getenv("DAILY_BRIEF_CHANNEL_ID", "").strip() or None
+    if channel_id is not None and not channel_id.isdecimal():
+        raise RuntimeError("DAILY_BRIEF_CHANNEL_ID must be a Discord channel ID.")
+    if (enabled_raw == "true" or require_channel) and channel_id is None:
+        raise RuntimeError("DAILY_BRIEF_CHANNEL_ID is required for delivery.")
+    return DailyBriefEnvironment(
+        enabled=enabled_raw == "true",
+        scheduled_time=scheduled_time,
+        timezone=timezone,
+        channel_id=channel_id,
     )

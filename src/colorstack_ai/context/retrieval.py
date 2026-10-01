@@ -305,6 +305,9 @@ class RetrievalService:
         event_id: UUID,
     ) -> list[RequirementContextItem]:
         async with self._database.sessions() as session:
+            event_name = await session.scalar(
+                select(EventRecord.canonical_name).where(EventRecord.id == event_id)
+            )
             rows = (
                 await session.execute(
                     select(
@@ -349,6 +352,8 @@ class RetrievalService:
                 )
             results.append(
                 RequirementContextItem(
+                    event_id=str(event_id),
+                    event_name=event_name,
                     requirement_id=str(requirement.id),
                     playbook=playbook.playbook_key,
                     key=requirement.requirement_key,

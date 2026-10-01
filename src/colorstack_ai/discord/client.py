@@ -1,4 +1,5 @@
 import logging
+from typing import Protocol
 
 import discord
 
@@ -18,6 +19,11 @@ from colorstack_ai.ingestion.store import MessageStore
 logger = logging.getLogger(__name__)
 
 
+class BriefScheduler(Protocol):
+    def start(self) -> None: ...
+    def shutdown(self) -> None: ...
+
+
 def create_intents() -> discord.Intents:
     intents = discord.Intents.none()
     intents.guilds = True
@@ -32,6 +38,10 @@ class DiscordIngestionClient(discord.Client):
         super().__init__(intents=create_intents())
         self._store = store
         self._initialization_started = False
+        self._brief_scheduler: BriefScheduler | None = None
+
+    def set_brief_scheduler(self, scheduler: BriefScheduler) -> None:
+        self._brief_scheduler = scheduler
 
     async def on_ready(self) -> None:
         if self._initialization_started:
@@ -75,7 +85,14 @@ class DiscordIngestionClient(discord.Client):
         logger.info("Newly stored: %s", f"{result.inserted:,}")
         if result.failed_channels:
             logger.warning("Skipped channels: %d", result.failed_channels)
+        if self._brief_scheduler is not None:
+            self._brief_scheduler.start()
         logger.info("Listening for new messages, edits, and deletions...")
+
+    async def close(self) -> None:
+        if self._brief_scheduler is not None:
+            self._brief_scheduler.shutdown()
+        await super().close()
 
     async def on_message(self, message: discord.Message) -> None:
         await ingest_message_create(self._store, message)

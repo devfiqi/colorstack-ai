@@ -1,9 +1,10 @@
-from datetime import datetime
+from datetime import date, datetime
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
     BigInteger,
     Boolean,
+    Date,
     DateTime,
     Float,
     ForeignKey,
@@ -14,6 +15,7 @@ from sqlalchemy import (
     UniqueConstraint,
     Uuid,
     func,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -684,6 +686,89 @@ class RequirementEvaluationRecord(Base):
     readiness_weight: Mapped[float] = mapped_column(Float, nullable=False)
     readiness_earned: Mapped[float] = mapped_column(Float, nullable=False)
     evaluated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+
+
+class ReasoningUsageRecord(Base):
+    __tablename__ = "reasoning_usage"
+    __table_args__ = (
+        Index("ix_reasoning_usage_requested_at", "requested_at"),
+        Index("ix_reasoning_usage_status", "status"),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    provider: Mapped[str] = mapped_column(String(32), nullable=False)
+    model: Mapped[str] = mapped_column(Text, nullable=False)
+    mode: Mapped[str] = mapped_column(String(32), nullable=False)
+    scope: Mapped[str] = mapped_column(String(32), nullable=False)
+    intent: Mapped[str] = mapped_column(String(64), nullable=False)
+    query_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    prompt_version: Mapped[str] = mapped_column(String(32), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    requested_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    latency_ms: Mapped[int | None] = mapped_column(Integer)
+    input_tokens: Mapped[int | None] = mapped_column(Integer)
+    output_tokens: Mapped[int | None] = mapped_column(Integer)
+    total_tokens: Mapped[int | None] = mapped_column(Integer)
+    estimated_cost: Mapped[float | None] = mapped_column(Float)
+    provider_request_id: Mapped[str | None] = mapped_column(Text)
+    context_chars: Mapped[int] = mapped_column(Integer, nullable=False)
+    context_stats: Mapped[dict[str, object]] = mapped_column(
+        JSONB,
+        nullable=False,
+    )
+    error: Mapped[str | None] = mapped_column(Text)
+
+
+class DailyBriefRunRecord(Base):
+    __tablename__ = "daily_brief_runs"
+    __table_args__ = (
+        Index("ix_daily_brief_runs_status", "status"),
+        Index(
+            "uq_daily_brief_runs_scheduled_date",
+            "scheduled_date",
+            unique=True,
+            postgresql_where=text("manually_triggered = false"),
+        ),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    scheduled_date: Mapped[date] = mapped_column(Date, nullable=False)
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    discord_channel_id: Mapped[str | None] = mapped_column(String(32))
+    discord_message_ids: Mapped[list[object]] = mapped_column(
+        JSONB,
+        nullable=False,
+        default=list,
+    )
+    reasoning_usage_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("reasoning_usage.id", ondelete="SET NULL")
+    )
+    brief_payload: Mapped[dict[str, object] | None] = mapped_column(JSONB)
+    rendered_text: Mapped[str | None] = mapped_column(Text)
+    failure_stage: Mapped[str | None] = mapped_column(String(32))
+    error: Mapped[str | None] = mapped_column(Text)
+    manually_triggered: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default="false",
+    )
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),
