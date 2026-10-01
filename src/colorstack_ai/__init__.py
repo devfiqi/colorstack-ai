@@ -1,0 +1,1 @@
+"""ColorStack Discord ingestion service."""
