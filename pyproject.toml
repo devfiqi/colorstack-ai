@@ -12,6 +12,7 @@ dependencies = [
   "apscheduler>=3.11,<4",
   "alembic>=1.14,<2",
   "discord.py>=2.6,<3",
+  "fastapi>=0.118,<1",
   "httpx>=0.28,<1",
   "openai>=2.0,<3",
   "pydantic>=2.10,<3",
@@ -19,10 +20,17 @@ dependencies = [
   "PyYAML>=6.0,<7",
   "python-dotenv>=1.0,<2",
   "sqlalchemy[asyncio]>=2.0,<3",
+  "uvicorn[standard]>=0.37,<1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8,<9",
 ]
 
 [project.scripts]
 colorstack-ai = "colorstack_ai.main:run"
+colorstack-api = "colorstack_ai.api.app:run"
 
 [tool.setuptools.packages.find]
 where = ["src"]

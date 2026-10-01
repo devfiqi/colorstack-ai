@@ -1,0 +1,111 @@
+from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class ApiModel(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class PriorityItem(ApiModel):
+    id: str
+    title: str
+    owner: str
+    due: str
+    priority: str
+    context: str
+
+
+class EventListItem(ApiModel):
+    id: str
+    name: str
+    date: str
+    type: str
+    phase: str
+    readiness: int
+    urgency: str
+    owner: str
+    blocker: str
+    next_action: str = Field(serialization_alias="nextAction")
+
+
+class OverviewResponse(ApiModel):
+    generated_at: datetime = Field(serialization_alias="generatedAt")
+    active_events: int = Field(serialization_alias="activeEvents")
+    high_priority: int = Field(serialization_alias="highPriority")
+    open_tasks: int = Field(serialization_alias="openTasks")
+    deadlines_this_week: int = Field(serialization_alias="deadlinesThisWeek")
+    priorities: list[PriorityItem]
+    events: list[EventListItem]
+    attention: list[dict[str, str]]
+    changes: list[dict[str, str]]
+
+
+class RequirementResponse(ApiModel):
+    id: str
+    label: str
+    group: str
+    status: str
+    owner: str
+    urgency: str
+    source: str
+    detail: str
+
+
+class EventDetailResponse(EventListItem):
+    sponsor: str | None = None
+    assessment: str
+    requirements: list[RequirementResponse]
+    owners: list[dict[str, str]]
+    key_dates: list[dict[str, str]] = Field(serialization_alias="keyDates")
+    blockers: list[str]
+    recent_changes: list[dict[str, str]] = Field(serialization_alias="recentChanges")
+
+
+class TaskResponse(ApiModel):
+    id: str
+    task: str
+    event_id: str | None = Field(serialization_alias="eventId")
+    event: str
+    owner: str
+    owner_group: str = Field(serialization_alias="ownerGroup")
+    status: str
+    priority: str
+    deadline: str
+    source: str
+
+
+class PersonResponse(ApiModel):
+    id: str
+    name: str
+    role: str
+    active_tasks: int = Field(serialization_alias="activeTasks")
+    owned_events: list[str] = Field(serialization_alias="ownedEvents")
+    unresolved: list[str]
+    tasks: list[TaskResponse] = Field(default_factory=list)
+
+
+class ActivityResponse(ApiModel):
+    id: str
+    time: str
+    day: str
+    event: str
+    kind: str
+    message: str
+
+
+class PlaybookResponse(ApiModel):
+    id: str
+    name: str
+    required: list[str]
+    optional: list[str]
+    lead_time: str = Field(serialization_alias="leadTime")
+
+
+class SystemResponse(ApiModel):
+    database: str
+    discord: str
+    extraction: str
+    reasoning: str
+    daily_brief_enabled: bool = Field(serialization_alias="dailyBriefEnabled")
+    daily_brief_schedule: str = Field(serialization_alias="dailyBriefSchedule")
