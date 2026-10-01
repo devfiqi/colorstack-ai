@@ -1,4 +1,5 @@
 from enum import StrEnum
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -159,3 +160,26 @@ class ReadinessSummary(BaseModel):
     not_applicable: int
     critical_gaps: int
     requirements: list[RequirementResult]
+
+
+class StateEvidence(BaseModel):
+    field: str
+    value: dict[str, Any]
+    source_fact_id: str
+    source_message_id: str
+    confidence: float
+
+
+class TaskSnapshot(BaseModel):
+    id: str
+    title: str
+    state: dict[str, StateEvidence]
+
+
+class EventSnapshot(BaseModel):
+    id: str
+    name: str
+    aliases: list[str]
+    state: dict[str, StateEvidence]
+    tasks: list[TaskSnapshot]
+    fact_text: list[str]
