@@ -7,8 +7,9 @@ organizational context and proactive executive updates.
 ## Current status
 
 Discord ingestion, local PostgreSQL persistence, local fact extraction, and
-versioned organizational-state reconciliation are implemented. Reasoning,
-event playbooks, and executive reports are not implemented.
+versioned organizational-state reconciliation are implemented. Versioned event
+playbooks now identify missing work, urgency, and readiness. Historical
+learning, higher-level reasoning, and executive reports are not implemented.
 
 ## System direction
 
@@ -89,6 +90,16 @@ python -m colorstack_ai.state rebuild
 Add `--resolve-ambiguous` to use the configured local Ollama model only for
 facts that deterministic rules cannot classify safely.
 
+Validate and evaluate event playbooks:
+
+```bash
+python -m colorstack_ai.playbooks list
+python -m colorstack_ai.playbooks validate
+python -m colorstack_ai.playbooks sync
+python -m colorstack_ai.requirements evaluate-all
+python -m colorstack_ai.requirements evaluate-event <event-id>
+```
+
 ## Verification queries
 
 ```bash
@@ -103,6 +114,9 @@ SELECT COUNT(*) FROM extracted_facts;
 SELECT COUNT(*) FROM current_state_values;
 SELECT COUNT(*) FROM state_changes;
 SELECT COUNT(*) FROM unresolved_facts WHERE status = 'unresolved';
+SELECT COUNT(*) FROM playbook_requirements;
+SELECT COUNT(*) FROM event_requirement_state;
+SELECT COUNT(*) FROM requirement_evaluations;
 SELECT COUNT(*) FROM messages WHERE is_deleted;
 SELECT id, channel_name, edited_at
 FROM messages
@@ -121,6 +135,8 @@ LIMIT 10;
 - [Phase 2 PostgreSQL persistence](docs/phase-2.md)
 - [Phase 3 local extraction](docs/phase-3.md)
 - [Phase 4 organizational state](docs/phase-4.md)
+- [Phase 5 event playbooks](docs/phase-5.md)
+- [Playbook format](docs/playbook-format.md)
 - [Data model](docs/data-model.md)
 - [Technical decisions](docs/decisions.md)
 - [Bot communication policy](docs/BOT_PERMISSIONS.md)

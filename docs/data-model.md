@@ -134,3 +134,43 @@ marks the row resolved instead of erasing its history.
 
 All Phase 4 tables are derived from active facts. `rebuild` replaces only this
 derived projection and preserves raw messages and extracted facts.
+
+## Phase 5 event playbooks
+
+### `playbooks`
+
+Stores immutable playbook identities by key and version, event type, overlay
+flag, active status, and a SHA-256 definition hash. Changing a synchronized
+version is rejected; edits require a new version.
+
+### `playbook_requirements`
+
+Stores requirement metadata, including required/optional status, criticality,
+owner, lead times, completion criteria, expected evidence, failure modes,
+sponsor dependency, next-step template, and deterministic evaluation config.
+
+### `requirement_dependencies`
+
+Links requirements to prerequisites in the same resolved playbook definition.
+
+### `event_playbooks`
+
+Records the base playbook and overlays detected for an event, including the
+reason and confidence. Assignments are replaced on each evaluation.
+
+### `event_requirement_state`
+
+Stores the current status, urgency, confidence, evidence, recommendation, and
+rationale for each event/requirement pair. Evidence retains fact and source
+message IDs where available.
+
+### `requirement_evaluation_runs`
+
+Stores each event-level readiness result and status counts. Readiness is a
+weighted percentage, not an unweighted count.
+
+### `requirement_evaluations`
+
+Append-only history for every requirement evaluated in a run, including
+evidence and its readiness weight and earned points. Re-evaluation updates
+current state while preserving prior snapshots.

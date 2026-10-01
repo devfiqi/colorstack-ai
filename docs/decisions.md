@@ -131,3 +131,38 @@ Use Ollama only when deterministic fact-to-field mapping fails and the CLI
 explicitly enables ambiguity resolution. Validate its structured proposal with
 Pydantic, require it to target the already resolved entity type, and pass it
 through the same deterministic policy. The model never writes database state.
+
+## 017 — Playbooks are versioned YAML
+
+Status: accepted for Phase 5.
+
+Keep generic and overlay definitions outside Python source. Validate them with
+Pydantic, hash synchronized versions, and reject in-place changes after a
+version reaches PostgreSQL. New event types or reviewed customizations use new
+files or `extends`.
+
+## 018 — Missing work is derived, not factual
+
+Status: accepted for Phase 5.
+
+A missing requirement means the active playbook expects evidence that current
+state does not contain. It is not an extracted Discord fact. Completion always
+requires source-linked state that satisfies explicit completion rules; optional
+items without evidence remain unknown.
+
+## 019 — Urgency and readiness are deterministic
+
+Status: accepted for Phase 5.
+
+Compute urgency from criticality, requirement status, event proximity, lead
+times, downstream impact, and sponsor dependency. Compute readiness with larger
+weights for required and critical work, partial credit for in-progress work,
+and no denominator contribution from explicitly not-applicable items.
+
+## 020 — Preserve every requirement evaluation
+
+Status: accepted for Phase 5.
+
+Upsert the latest event/requirement state while appending a complete evaluation
+snapshot per run. This supports auditability and future historical learning
+without changing raw messages, extracted facts, or state-change history.

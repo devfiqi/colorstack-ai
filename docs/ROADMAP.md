@@ -71,7 +71,35 @@ Deferred improvements:
 - Improve cross-message and cross-version semantic deduplication.
 - Add dedicated query services when Phase 5 consumers require them.
 
-## Phase 5 — Reasoning and reporting
+## Phase 5 — Event playbooks
+
+Status: implemented and manually verified.
+
+- Seven versioned YAML definitions cover six base event types and the
+  company-sponsored overlay.
+- Pydantic validates requirements, lead times, dependencies, completion
+  criteria, evidence rules, and extensions.
+- Conservative detection supports one base type plus applicable overlays.
+- Evaluation distinguishes complete, in-progress, missing, blocked, unknown,
+  and not-applicable work using source-linked current state.
+- Deterministic urgency considers criticality, event proximity, lead time,
+  downstream dependencies, status, and sponsorship.
+- Weighted readiness prioritizes required and critical requirements.
+- Current requirement state and append-only evaluation history are persisted.
+
+Deferred improvements:
+
+- Add reviewed ColorStack-specific playbook extensions.
+- Add a human applicability and completion override workflow.
+- Calibrate completion rules with more real event data.
+
+## Phase 6 — Historical learning and customization
+
+- Learn reviewed lead times and recurring failure patterns from past events.
+- Support approved ColorStack and sponsor-specific requirement overrides.
+- Compare predicted requirements with actual outcomes without mutating history.
+
+## Later — Reasoning and reporting
 
 - Answer leadership questions from structured, source-linked context.
 - Generate daily executive briefs.
@@ -80,5 +108,5 @@ Deferred improvements:
 
 ## Not included yet
 
-Event playbooks, embeddings, vector search, dashboards, scheduled reports, and
-external data sharing remain outside the current implementation.
+Historical learning, embeddings, vector search, dashboards, scheduled reports,
+and external data sharing remain outside the current implementation.
