@@ -141,6 +141,13 @@ class PlaybookEvaluatorTest(unittest.IsolatedAsyncioTestCase):
             task="Find judges",
             status="in_progress",
         )
+        await self.seed_fact(
+            message_id="av-blocked",
+            message_time=NOW + timedelta(minutes=2, seconds=1),
+            fact_type="blocker",
+            task="AV setup",
+            value="Projector access is unavailable",
+        )
         await self.reconcile()
 
         async with self.database.sessions() as session:
@@ -149,9 +156,11 @@ class PlaybookEvaluatorTest(unittest.IsolatedAsyncioTestCase):
         initial = await self.evaluator().evaluate_event(event.id)
         judges = self._result(initial, "ideathon:judges")
         rubric = self._result(initial, "ideathon:judging_rubric")
+        av_setup = self._result(initial, "ideathon:av_setup")
         self.assertEqual(judges.status, "in_progress")
         self.assertEqual(rubric.status, "missing")
         self.assertEqual(rubric.urgency, "high")
+        self.assertEqual(av_setup.status, "blocked")
 
         await self.seed_fact(
             message_id="judges-complete",

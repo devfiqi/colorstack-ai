@@ -115,7 +115,7 @@ class EventEvaluator:
                             RequirementStatus.COMPLETE,
                             RequirementStatus.NOT_APPLICABLE,
                         }
-                        else requirement.next_step
+                        else self._recommendation(requirement)
                     ),
                     readiness_weight=weight,
                     readiness_earned=earned,
@@ -379,3 +379,16 @@ class EventEvaluator:
     @staticmethod
     def _confidence(evidence: list[RequirementEvidence]) -> float:
         return 0.95 if evidence else 1.0
+
+    @staticmethod
+    def _recommendation(requirement: RequirementDefinition) -> str:
+        if (
+            requirement.next_step
+            != "Assign an owner and document the completion evidence."
+        ):
+            return requirement.next_step
+        criterion = requirement.done_when[0].rstrip(".")
+        return (
+            f"Assign an owner for {requirement.name} and document when "
+            f"{criterion}."
+        )
