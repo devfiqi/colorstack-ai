@@ -25,6 +25,8 @@ export interface EventRecord {
   owner: string;
   blocker: string;
   nextAction: string;
+  authoritative: boolean;
+  needsClarification: boolean;
   sponsor?: string | null;
   assessment?: string;
   requirements?: Requirement[];
@@ -32,6 +34,14 @@ export interface EventRecord {
   keyDates?: Array<{ label: string; date: string }>;
   blockers?: string[];
   recentChanges?: Array<{ id: string; field: string; message: string; time: string }>;
+  divisionReadiness?: Array<{
+    division: string;
+    readiness: number;
+    complete: number;
+    total: number;
+    confirmed: number;
+    needsClarification: number;
+  }>;
 }
 
 export interface TaskRecord {
@@ -48,6 +58,13 @@ export interface TaskRecord {
   markers: string[];
   nextStep: string;
   manuallyUpdated: boolean;
+  division: string | null;
+  eventPhase: "before" | "during" | "after" | null;
+  expectedResult: string | null;
+  whyItMatters: string | null;
+  sourceEvidence: Record<string, unknown> | null;
+  recommended: boolean;
+  needsClarification: boolean;
 }
 
 export interface GuidanceMarker {

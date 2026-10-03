@@ -1,6 +1,7 @@
 import logging
 import re
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any, Protocol
 
 from colorstack_ai.extraction.context import ContextBuilder
@@ -63,6 +64,8 @@ class ExtractionProcessor:
         *,
         mode: str,
         limit: int | None,
+        start_at: datetime | None = None,
+        end_at: datetime | None = None,
     ) -> ExtractionSummary:
         run_id = await self._repository.create_run(
             model_name=self._extractor.model,
@@ -80,6 +83,8 @@ class ExtractionProcessor:
                 mode=mode,
                 extraction_version=self._extraction_version,
                 limit=limit,
+                start_at=start_at,
+                end_at=end_at,
             )
             summary.scanned = len(candidate_ids)
             logger.info("Scanning %d candidate messages", summary.scanned)

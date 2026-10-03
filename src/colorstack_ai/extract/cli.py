@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 import logging
+from datetime import UTC, date, datetime, timedelta
 
 from colorstack_ai.config import load_extraction_environment
 from colorstack_ai.db.session import Database
@@ -28,9 +29,21 @@ def parse_args() -> argparse.Namespace:
         "--version",
         help="Extraction version; defaults to EXTRACTION_VERSION.",
     )
+    parser.add_argument(
+        "--from-date",
+        type=date.fromisoformat,
+        help="Inclusive local calendar date (YYYY-MM-DD) for a bounded reprocess.",
+    )
+    parser.add_argument(
+        "--to-date",
+        type=date.fromisoformat,
+        help="Inclusive local calendar date (YYYY-MM-DD) for a bounded reprocess.",
+    )
     args = parser.parse_args()
     if args.limit is not None and args.limit <= 0:
         parser.error("--limit must be positive")
+    if args.from_date and args.to_date and args.to_date < args.from_date:
+        parser.error("--to-date must not be before --from-date")
     return args
 
 
@@ -60,6 +73,20 @@ async def main(args: argparse.Namespace) -> None:
             await processor.process(
                 mode=args.mode,
                 limit=limit,
+                start_at=(
+                    datetime.combine(args.from_date, datetime.min.time(), tzinfo=UTC)
+                    if args.from_date
+                    else None
+                ),
+                end_at=(
+                    datetime.combine(
+                        args.to_date + timedelta(days=1),
+                        datetime.min.time(),
+                        tzinfo=UTC,
+                    )
+                    if args.to_date
+                    else None
+                ),
             )
     finally:
         await database.close()

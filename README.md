@@ -114,6 +114,26 @@ python -m colorstack_ai.state retry-unresolved
 python -m colorstack_ai.state rebuild
 ```
 
+Seed VP-confirmed events and their clearly labeled operating-plan recommendations:
+
+```bash
+python -m colorstack_ai.operations
+```
+
+The seed is idempotent. It preserves confirmed event dates through a state
+rebuild and creates recommended work for every chapter division in before,
+during, and after-event phases. Recommended work is not represented as a
+confirmed commitment until its owner, deadline, and applicability are clarified.
+
+Reprocess a bounded historical window with conversation-level context by using
+a new extraction version. For the October 2026 rebuild:
+
+```bash
+EXTRACTION_VERSION=v3 python -m colorstack_ai.extract backfill \
+  --from-date 2026-08-03 --to-date 2026-10-03
+python -m colorstack_ai.state reconcile-new
+```
+
 Add `--resolve-ambiguous` to use the configured local Ollama model only for
 facts that deterministic rules cannot classify safely.
 
@@ -168,6 +188,10 @@ with interactive API documentation at `/docs`.
 The VP task board supports explicit manual completion and reopening. These
 choices are stored as append-only local overrides so the dashboard can honor
 the VP's decision without posting to Discord or changing any external system.
+Tasks carry their linked event, division, before/during/after phase, expected
+result, why it matters, recommendation status, clarification markers, and
+available source evidence. Overview, Tasks, and Event workspaces use those same
+task records.
 
 For a persistent macOS setup that starts after login and restarts failed local
 processes, see [docs/local-services.md](docs/local-services.md). The always-on

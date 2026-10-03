@@ -14,6 +14,7 @@ export function TaskTable({ data, compact = false }: { data: TaskRecord[]; compa
         <thead>
           <tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted-foreground">
             <th className="px-3 py-2 font-medium">Task</th>
+            <th className="px-3 py-2 font-medium">Division / phase</th>
             <th className="px-3 py-2 font-medium">Event</th>
             <th className="px-3 py-2 font-medium">Owner</th>
             <th className="px-3 py-2 font-medium">Status</th>
@@ -25,7 +26,17 @@ export function TaskTable({ data, compact = false }: { data: TaskRecord[]; compa
         <tbody>
           {data.map((task) => (
             <tr key={task.id} className="row-hover border-b border-border/70 last:border-0">
-              <td className="px-3 py-2 font-medium">{task.task}</td>
+              <td className="px-3 py-2 font-medium">
+                {task.task}
+                {task.recommended && (
+                  <span className="ml-2 rounded bg-warning-muted px-1.5 py-0.5 text-[10px] font-medium text-warning-foreground">
+                    Recommended
+                  </span>
+                )}
+              </td>
+              <td className="px-3 py-2 text-muted-foreground">
+                {task.division ? `${task.division} · ${task.eventPhase ?? "unspecified"}` : "—"}
+              </td>
               <td className="px-3 py-2 text-muted-foreground">
                 {task.eventId ? (
                   <Link

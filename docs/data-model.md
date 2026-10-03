@@ -102,10 +102,20 @@ Events have deterministic internal IDs, guild scope, canonical names, and
 normalized names. Aliases are unique within a guild and retain their source fact
 when available.
 
+VP-confirmed events are stored in the same table with `record_kind` set to
+`authoritative`, their confirmed date, evidence metadata, and a clarification
+flag. They remain intact when the derived state projection is rebuilt.
+
 ### `tasks`
 
 Tasks have deterministic internal IDs, guild scope, an optional event link, and
 canonical and normalized titles. Mutable task data is stored separately.
+
+Operational-plan tasks use the same records and add a task kind, chapter
+division, event phase, expected result, why-it-matters explanation, source
+evidence, recommendation flag, and clarification flag. This lets Overview,
+Tasks, and Event workspaces reflect one task record rather than separate copies.
+Playbook recommendations remain explicitly marked until a human confirms them.
 
 ### `current_state_values`
 

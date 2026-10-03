@@ -168,6 +168,8 @@ class DashboardService:
         ]
         sponsor = self._state_text(context.current_state.get("sponsor"))
         assessment = self._assessment(context)
+        event_tasks = await self._task_responses(context.tasks)
+        division_readiness = self._division_readiness(event_tasks)
         return EventDetailResponse(
             **summary.model_dump(),
             sponsor=sponsor,
@@ -177,6 +179,7 @@ class DashboardService:
             key_dates=key_dates,
             blockers=blockers,
             recent_changes=recent_changes,
+            division_readiness=division_readiness,
         )
 
     async def tasks(
@@ -186,6 +189,9 @@ class DashboardService:
         owner: str | None = None,
         event: str | None = None,
         urgency: str | None = None,
+        division: str | None = None,
+        phase: str | None = None,
+        deadline: str | None = None,
     ) -> list[TaskResponse]:
         tasks = await self._task_responses()
         return [
@@ -195,6 +201,9 @@ class DashboardService:
             and (owner is None or owner.casefold() in item.owner.casefold())
             and (event is None or event.casefold() in item.event.casefold())
             and (urgency is None or item.priority == urgency)
+            and (division is None or (item.division or "").casefold() == division.casefold())
+            and (phase is None or (item.event_phase or "").casefold() == phase.casefold())
+            and (deadline is None or deadline.casefold() in item.deadline.casefold())
         ]
 
     async def update_task_status(
@@ -513,18 +522,29 @@ class DashboardService:
         if summary is None:
             return None
         state = await self._retrieval.state_values(entity_type="event", entity_id=event_id)
-        tasks = await self._retrieval.tasks(event_id=event_id)
+        tasks = await self._task_responses(await self._retrieval.tasks(event_id=event_id))
         requirements = await self._retrieval.requirements(event_id)
         event_type = await self._event_type(event_id)
-        owners = list(dict.fromkeys(item.owner_name for item in tasks if item.owner_name))
+        owners = list(dict.fromkeys(item.owner for item in tasks if item.owner != "Unassigned"))
         owner_state = self._state_text(state.get("owner"))
         if owner_state:
             owners.insert(0, owner_state)
-        blockers = [item for item in tasks if item.status == "blocked" or item.blocker]
+        blockers = [item for item in tasks if item.status == "waiting" or "Blocked" in item.markers]
         missing = [item for item in requirements if item.status in {"missing", "blocked", "in_progress"}]
         next_action = f"Resolve {missing[0].name}" if missing else "Review current event state"
+        async with self._database.sessions() as session:
+            event_record = await session.get(EventRecord, event_id)
         date_value = state.get("event_date_time")
-        date_label = self._deadline_label(date_value.value) if date_value else "TBD"
+        date_label = (
+            event_record.authoritative_date.strftime("%b %d").replace(" 0", " ")
+            if event_record and event_record.authoritative_date
+            else self._deadline_label(date_value.value) if date_value else "TBD"
+        )
+        event_type = (
+            str((event_record.source_evidence or {}).get("event_type", event_type)).replace("_", " ").title()
+            if event_record and event_record.record_kind == "authoritative"
+            else event_type
+        )
         return EventListItem(
             id=str(event_id),
             name=summary.name,
@@ -536,6 +556,8 @@ class DashboardService:
             owner=" / ".join(owners) or "Unassigned",
             blocker=self._task_blocker(blockers[0]) if blockers else "—",
             next_action=next_action,
+            authoritative=bool(event_record and event_record.record_kind == "authoritative"),
+            needs_clarification=bool(event_record and event_record.needs_clarification),
         )
 
     async def _event_type(self, event_id: UUID) -> str:
@@ -609,8 +631,20 @@ class DashboardService:
         for record in records:
             overrides.setdefault(record.task_id, record.status)
         items = task_items if task_items is not None else await self._retrieval.tasks()
+        task_ids = [UUID(item.task_id) for item in items]
+        async with self._database.sessions() as session:
+            records = {
+                record.id: record
+                for record in (
+                    await session.scalars(select(TaskRecord).where(TaskRecord.id.in_(task_ids)))
+                ).all()
+            } if task_ids else {}
         return [
-            self._task_response(item, overrides.get(UUID(item.task_id)))
+            self._task_response(
+                item,
+                overrides.get(UUID(item.task_id)),
+                records.get(UUID(item.task_id)),
+            )
             for item in items
         ]
 
@@ -618,6 +652,7 @@ class DashboardService:
         self,
         item: TaskContextItem,
         status_override: str | None = None,
+        record: TaskRecord | None = None,
     ) -> TaskResponse:
         raw_status = (status_override or item.status or "open").casefold()
         status = self._normalize_task_status(raw_status)
@@ -660,6 +695,13 @@ class DashboardService:
             markers=markers,
             next_step=self._task_next_step(status, markers),
             manually_updated=status_override is not None,
+            division=record.division if record else None,
+            event_phase=record.event_phase if record else None,
+            expected_result=record.expected_result if record else None,
+            why_it_matters=record.why_it_matters if record else None,
+            source_evidence=record.source_evidence if record else None,
+            recommended=record.recommended if record else False,
+            needs_clarification=(record.needs_clarification if record else False) or bool(markers),
         )
 
     @staticmethod
@@ -749,12 +791,36 @@ class DashboardService:
         return None
 
     @staticmethod
-    def _task_blocker(item: TaskContextItem) -> str:
-        if item.blocker:
-            detail = item.blocker.get("text") or item.blocker.get("value")
+    def _task_blocker(item: TaskContextItem | TaskResponse) -> str:
+        blocker = getattr(item, "blocker", None)
+        if blocker:
+            detail = blocker.get("text") or blocker.get("value")
             if detail:
                 return str(detail)
-        return f"{item.title} is blocked"
+        title = getattr(item, "title", None) or getattr(item, "task", "Task")
+        return f"{title} is blocked"
+
+    @staticmethod
+    def _division_readiness(tasks: list[TaskResponse]) -> list[dict[str, object]]:
+        groups: dict[str, list[TaskResponse]] = {}
+        for task in tasks:
+            if task.division:
+                groups.setdefault(task.division, []).append(task)
+        results = []
+        for division, items in sorted(groups.items()):
+            complete = sum(item.status == "complete" for item in items)
+            confirmed = sum(not item.recommended for item in items)
+            results.append(
+                {
+                    "division": division,
+                    "readiness": round(complete / len(items) * 100) if items else 0,
+                    "complete": complete,
+                    "total": len(items),
+                    "confirmed": confirmed,
+                    "needsClarification": sum(item.needs_clarification for item in items),
+                }
+            )
+        return results
 
     @staticmethod
     def _deadline_datetime(value: dict[str, object]) -> datetime | None:

@@ -56,6 +56,8 @@ class ExtractionRepository:
         mode: str,
         extraction_version: str,
         limit: int | None,
+        start_at: datetime | None = None,
+        end_at: datetime | None = None,
     ) -> list[str]:
         state_match = and_(
             MessageProcessingStateRecord.message_id == MessageRecord.id,
@@ -65,6 +67,10 @@ class ExtractionRepository:
         statement = select(MessageRecord.id).where(
             MessageRecord.is_deleted.is_(False)
         )
+        if start_at is not None:
+            statement = statement.where(MessageRecord.created_at >= start_at)
+        if end_at is not None:
+            statement = statement.where(MessageRecord.created_at < end_at)
 
         if mode in {"backfill", "new"}:
             statement = statement.outerjoin(

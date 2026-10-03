@@ -29,6 +29,8 @@ class EventListItem(ApiModel):
     owner: str
     blocker: str
     next_action: str = Field(serialization_alias="nextAction")
+    authoritative: bool = False
+    needs_clarification: bool = Field(default=False, serialization_alias="needsClarification")
 
 
 class OverviewResponse(ApiModel):
@@ -62,6 +64,10 @@ class EventDetailResponse(EventListItem):
     key_dates: list[dict[str, str]] = Field(serialization_alias="keyDates")
     blockers: list[str]
     recent_changes: list[dict[str, str]] = Field(serialization_alias="recentChanges")
+    division_readiness: list[dict[str, object]] = Field(
+        default_factory=list,
+        serialization_alias="divisionReadiness",
+    )
 
 
 class TaskResponse(ApiModel):
@@ -78,6 +84,13 @@ class TaskResponse(ApiModel):
     markers: list[str] = Field(default_factory=list)
     next_step: str = Field(default="Review and decide the next step", serialization_alias="nextStep")
     manually_updated: bool = Field(default=False, serialization_alias="manuallyUpdated")
+    division: str | None = None
+    event_phase: str | None = Field(default=None, serialization_alias="eventPhase")
+    expected_result: str | None = Field(default=None, serialization_alias="expectedResult")
+    why_it_matters: str | None = Field(default=None, serialization_alias="whyItMatters")
+    source_evidence: dict[str, object] | None = Field(default=None, serialization_alias="sourceEvidence")
+    recommended: bool = False
+    needs_clarification: bool = Field(default=False, serialization_alias="needsClarification")
 
 
 class TaskStatusUpdate(ApiModel):

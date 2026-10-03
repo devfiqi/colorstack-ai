@@ -39,7 +39,14 @@ export function EventTable({ data }: { data: EventRecord[] }) {
               onClick={() => navigate({ to: "/events/$eventId", params: { eventId: event.id } })}
               className="row-hover cursor-pointer border-b border-border/70 last:border-0"
             >
-              <td className="px-3 py-2 font-medium">{event.name}</td>
+              <td className="px-3 py-2 font-medium">
+                <span>{event.name}</span>
+                {event.authoritative && (
+                  <span className="ml-2 rounded bg-success-muted px-1.5 py-0.5 text-[10px] font-semibold text-success-foreground">
+                    Confirmed
+                  </span>
+                )}
+              </td>
               <td className="px-3 py-2 text-muted-foreground">{event.date}</td>
               <td className="px-3 py-2 text-muted-foreground">{event.type}</td>
               <td className="px-3 py-2">

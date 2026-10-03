@@ -50,14 +50,25 @@ async def tasks(
     owner: str | None = None,
     event: str | None = None,
     urgency: str | None = None,
+    division: str | None = None,
+    phase: str | None = None,
+    deadline: str | None = None,
     service: DashboardService = Depends(get_dashboard_service),
 ) -> list[TaskResponse]:
-    return await service.tasks(
-        status=status,
-        owner=owner,
-        event=event,
-        urgency=urgency,
-    )
+    filters = {
+        key: value
+        for key, value in {
+            "status": status,
+            "owner": owner,
+            "event": event,
+            "urgency": urgency,
+            "division": division,
+            "phase": phase,
+            "deadline": deadline,
+        }.items()
+        if value is not None
+    }
+    return await service.tasks(**filters)
 
 
 @router.patch("/tasks/{task_id}", response_model=TaskResponse)

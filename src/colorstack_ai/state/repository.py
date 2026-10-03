@@ -42,12 +42,22 @@ class StateRepository:
                 CurrentStateValueRecord,
                 UnresolvedFactRecord,
                 FactReconciliationStateRecord,
-                EventAliasRecord,
-                TaskRecord,
-                EventRecord,
                 ReconciliationRunRecord,
             ):
                 await session.execute(delete(record))
+            await session.execute(
+                delete(EventAliasRecord).where(
+                    EventAliasRecord.event_id.in_(
+                        select(EventRecord.id).where(EventRecord.record_kind == "derived")
+                    )
+                )
+            )
+            await session.execute(
+                delete(TaskRecord).where(TaskRecord.task_kind == "derived")
+            )
+            await session.execute(
+                delete(EventRecord).where(EventRecord.record_kind == "derived")
+            )
 
     async def create_run(self, mode: str) -> UUID:
         async with self._database.sessions.begin() as session:

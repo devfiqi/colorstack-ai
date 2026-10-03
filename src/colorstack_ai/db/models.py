@@ -258,6 +258,23 @@ class EventRecord(Base):
     guild_id: Mapped[str] = mapped_column(String(32), nullable=False)
     canonical_name: Mapped[str] = mapped_column(Text, nullable=False)
     normalized_name: Mapped[str] = mapped_column(Text, nullable=False)
+    record_kind: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+        default="derived",
+        server_default="derived",
+    )
+    authoritative_date: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True)
+    )
+    date_confidence: Mapped[str | None] = mapped_column(String(32))
+    source_evidence: Mapped[dict[str, object] | None] = mapped_column(JSONB)
+    needs_clarification: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default="false",
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
@@ -320,6 +337,29 @@ class TaskRecord(Base):
     )
     canonical_title: Mapped[str] = mapped_column(Text, nullable=False)
     normalized_title: Mapped[str] = mapped_column(Text, nullable=False)
+    task_kind: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+        default="derived",
+        server_default="derived",
+    )
+    division: Mapped[str | None] = mapped_column(String(96))
+    event_phase: Mapped[str | None] = mapped_column(String(32))
+    expected_result: Mapped[str | None] = mapped_column(Text)
+    why_it_matters: Mapped[str | None] = mapped_column(Text)
+    source_evidence: Mapped[dict[str, object] | None] = mapped_column(JSONB)
+    recommended: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default="false",
+    )
+    needs_clarification: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default="false",
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,

@@ -175,6 +175,30 @@ function EventDetail() {
             </ul>
           </Panel>
 
+          <Panel title="Division readiness" bodyClassName="">
+            {(event.divisionReadiness ?? []).map((item) => (
+              <div
+                key={item.division}
+                className="border-b border-border/70 px-3 py-2 last:border-0"
+              >
+                <div className="flex items-center justify-between gap-2 text-[12px]">
+                  <span className="font-medium">{item.division}</span>
+                  <span className="text-muted-foreground">
+                    {item.complete}/{item.total} done
+                  </span>
+                </div>
+                <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted">
+                  <div className="h-full bg-info" style={{ width: `${item.readiness}%` }} />
+                </div>
+                {item.needsClarification > 0 && (
+                  <p className="mt-1 text-[10.5px] text-warning-foreground">
+                    {item.needsClarification} need confirmation
+                  </p>
+                )}
+              </div>
+            ))}
+          </Panel>
+
           <Panel title="Key Dates" bodyClassName="">
             <ul>
               {(event.keyDates ?? []).map((date) => (

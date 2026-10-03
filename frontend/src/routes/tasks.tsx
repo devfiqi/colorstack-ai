@@ -89,6 +89,28 @@ function TaskCard({
           ))}
         </div>
       )}
+      {(task.division || task.recommended) && (
+        <div className="mt-2 flex flex-wrap gap-1">
+          {task.division && <Chip>{task.division}</Chip>}
+          {task.eventPhase && <Chip>{task.eventPhase}</Chip>}
+          {task.recommended && <Chip variant="warning">Recommended until confirmed</Chip>}
+        </div>
+      )}
+      {task.expectedResult && (
+        <p className="mt-2 text-[11.5px] leading-relaxed text-muted-foreground">
+          <span className="font-medium text-foreground">Result:</span> {task.expectedResult}
+        </p>
+      )}
+      {task.whyItMatters && (
+        <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
+          <span className="font-medium text-foreground">Why:</span> {task.whyItMatters}
+        </p>
+      )}
+      {task.sourceEvidence && (
+        <p className="mt-1 text-[10.5px] text-muted-foreground">
+          Evidence: {String(task.sourceEvidence.kind ?? "Current state")}
+        </p>
+      )}
       <p className="mt-2 rounded bg-surface px-2 py-1.5 text-[11.5px] leading-relaxed">
         <span className="font-medium">Next:</span> {task.nextStep}
       </p>
@@ -120,6 +142,8 @@ function TasksPage() {
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<Filter>("mine");
   const [query, setQuery] = useState("");
+  const [division, setDivision] = useState("all");
+  const [phase, setPhase] = useState("all");
   const {
     data: tasks = [],
     isPending,
@@ -159,17 +183,29 @@ function TasksPage() {
               : filter === "waiting"
                 ? task.status === "waiting"
                 : true;
+        const matchesDivision = division === "all" || task.division === division;
+        const matchesPhase = phase === "all" || task.eventPhase === phase;
         const q = query.trim().toLowerCase();
         return (
           matchesFilter &&
+          matchesDivision &&
+          matchesPhase &&
           (q === "" ||
-            [task.task, task.event, task.owner, task.source, ...task.markers]
+            [
+              task.task,
+              task.event,
+              task.owner,
+              task.source,
+              task.division,
+              task.eventPhase,
+              ...task.markers,
+            ]
               .join(" ")
               .toLowerCase()
               .includes(q))
         );
       }),
-    [tasks, filter, query],
+    [tasks, filter, query, division, phase],
   );
 
   if (isPending) return <p className="text-sm text-muted-foreground">Loading task board…</p>;
@@ -192,6 +228,32 @@ function TasksPage() {
               />
             </div>
             <FilterTabs options={filters} value={filter} onChange={setFilter} />
+            <select
+              value={division}
+              onChange={(event) => setDivision(event.target.value)}
+              className="h-7 max-w-44 rounded-md border border-border bg-panel px-2 text-[12px]"
+              aria-label="Filter by division"
+            >
+              <option value="all">All divisions</option>
+              {Array.from(new Set(tasks.flatMap((task) => (task.division ? [task.division] : []))))
+                .sort()
+                .map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+            </select>
+            <select
+              value={phase}
+              onChange={(event) => setPhase(event.target.value)}
+              className="h-7 rounded-md border border-border bg-panel px-2 text-[12px]"
+              aria-label="Filter by event phase"
+            >
+              <option value="all">All phases</option>
+              <option value="before">Before</option>
+              <option value="during">During</option>
+              <option value="after">After</option>
+            </select>
           </>
         }
       />
