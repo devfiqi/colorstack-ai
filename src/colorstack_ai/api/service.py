@@ -1,12 +1,16 @@
+import os
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from colorstack_ai.api.schemas import (
     ActivityResponse,
     EventDetailResponse,
     EventListItem,
+    GuidanceCoverage,
+    GuidanceMarker,
+    GuidanceResponse,
     OverviewResponse,
     PersonResponse,
     PlaybookResponse,
@@ -19,10 +23,15 @@ from colorstack_ai.context.models import ContextLimits, EventContext, TaskContex
 from colorstack_ai.context.retrieval import RetrievalService
 from colorstack_ai.db.models import (
     DailyBriefRunRecord,
+    EventRequirementStateRecord,
     EventPlaybookRecord,
     EventRecord,
+    ExtractedFactRecord,
+    MessageProcessingStateRecord,
+    MessageRecord,
     PlaybookRecord,
     PlaybookRequirementRecord,
+    PipelineRunRecord,
     StateChangeRecord,
     TaskRecord,
 )
@@ -173,6 +182,185 @@ class DashboardService:
             and (event is None or event.casefold() in item.event.casefold())
             and (urgency is None or item.priority == urgency)
         ]
+
+    async def guidance(self) -> GuidanceResponse:
+        task_items = await self._retrieval.tasks()
+        tasks = [self._task_response(item) for item in task_items]
+        open_tasks = [item for item in tasks if item.status != "complete"]
+        urgency_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+        open_tasks.sort(
+            key=lambda item: (
+                item.owner_group != "mine",
+                urgency_order.get(item.priority, 4),
+                item.deadline == "TBD",
+                item.task.casefold(),
+            )
+        )
+
+        do_now: list[GuidanceMarker] = []
+        missing: list[GuidanceMarker] = []
+        improve: list[GuidanceMarker] = []
+        for item in open_tasks:
+            if item.owner_group == "mine" or item.priority in {"critical", "high"}:
+                do_now.append(
+                    GuidanceMarker(
+                        id=f"task-action-{item.id}",
+                        category="action",
+                        title=item.task,
+                        reason=self._task_guidance_reason(item),
+                        recommendation=item.next_step,
+                        question=self._task_guidance_question(item),
+                        urgency=item.priority,
+                        event=None if item.event == "—" else item.event,
+                        task_id=item.id,
+                    )
+                )
+            if "No owner" in item.markers:
+                missing.append(
+                    GuidanceMarker(
+                        id=f"task-owner-{item.id}",
+                        category="missing",
+                        title=f"Owner missing: {item.task}",
+                        reason="No accountable owner is recorded.",
+                        recommendation="Choose one person who owns the next step.",
+                        question=f"Who is accountable for {item.task}?",
+                        urgency="high",
+                        event=None if item.event == "—" else item.event,
+                        task_id=item.id,
+                    )
+                )
+            if "No deadline" in item.markers:
+                missing.append(
+                    GuidanceMarker(
+                        id=f"task-deadline-{item.id}",
+                        category="missing",
+                        title=f"Deadline missing: {item.task}",
+                        reason="The work has no recorded due date, so it cannot be prioritized reliably.",
+                        recommendation="Set a specific due date or explicitly defer it.",
+                        question=f"When does {item.task} need to be complete?",
+                        urgency="medium",
+                        event=None if item.event == "—" else item.event,
+                        task_id=item.id,
+                    )
+                )
+
+        async with self._database.sessions() as session:
+            requirement_rows = list(
+                (
+                    await session.execute(
+                        select(
+                            EventRequirementStateRecord,
+                            PlaybookRequirementRecord.name,
+                            EventRecord.canonical_name,
+                        )
+                        .join(
+                            PlaybookRequirementRecord,
+                            PlaybookRequirementRecord.id
+                            == EventRequirementStateRecord.requirement_id,
+                        )
+                        .join(
+                            EventRecord,
+                            EventRecord.id == EventRequirementStateRecord.event_id,
+                        )
+                        .where(
+                            EventRequirementStateRecord.status.in_(("missing", "blocked"))
+                        )
+                        .order_by(EventRequirementStateRecord.evaluated_at.desc())
+                        .limit(12)
+                    )
+                ).all()
+            )
+            archived_messages = int(
+                await session.scalar(
+                    select(func.count()).select_from(MessageRecord).where(MessageRecord.is_deleted.is_(False))
+                )
+                or 0
+            )
+            reviewed_messages = int(
+                await session.scalar(
+                    select(func.count(func.distinct(MessageProcessingStateRecord.message_id)))
+                )
+                or 0
+            )
+            structured_facts = int(
+                await session.scalar(
+                    select(func.count()).select_from(ExtractedFactRecord).where(ExtractedFactRecord.active.is_(True))
+                )
+                or 0
+            )
+            latest_pipeline = await session.scalar(
+                select(PipelineRunRecord).order_by(PipelineRunRecord.finished_at.desc()).limit(1)
+            )
+
+        for state, requirement_name, event_name in requirement_rows:
+            missing.append(
+                GuidanceMarker(
+                    id=f"requirement-{state.event_id}-{state.requirement_id}",
+                    category="missing",
+                    title=str(requirement_name),
+                    reason=state.rationale,
+                    recommendation=state.recommendation or f"Confirm and document {requirement_name}.",
+                    question=f"What is the current plan for {requirement_name} on {event_name}?",
+                    urgency=state.urgency,
+                    event=str(event_name),
+                )
+            )
+
+        reviewed_percent = (
+            round(reviewed_messages / archived_messages * 100, 1)
+            if archived_messages
+            else 100.0
+        )
+        if reviewed_messages < archived_messages:
+            backlog = archived_messages - reviewed_messages
+            improve.append(
+                GuidanceMarker(
+                    id="system-extraction-coverage",
+                    category="improvement",
+                    title="Complete the knowledge backlog",
+                    reason=f"{backlog:,} archived messages have not been reviewed by the local extraction pipeline.",
+                    recommendation="Keep the ingestion worker and Ollama running until coverage reaches 100%.",
+                    question="Which channels or date ranges should be processed first?",
+                    urgency="high" if reviewed_percent < 50 else "medium",
+                )
+            )
+        if latest_pipeline is None:
+            improve.append(
+                GuidanceMarker(
+                    id="system-pipeline-never-ran",
+                    category="improvement",
+                    title="Start continuous intelligence processing",
+                    reason="No completed pipeline cycle is recorded.",
+                    recommendation="Run the ColorStack worker continuously with the dashboard.",
+                    question="Should processing prioritize the newest messages first?",
+                    urgency="critical",
+                )
+            )
+        elif datetime.now(UTC) - latest_pipeline.finished_at > timedelta(minutes=5):
+            improve.append(
+                GuidanceMarker(
+                    id="system-pipeline-stale",
+                    category="improvement",
+                    title="Restore continuous processing",
+                    reason="The latest pipeline cycle is more than five minutes old.",
+                    recommendation="Restart the local worker and verify Ollama remains available.",
+                    question="Did this Mac sleep or was the worker stopped?",
+                    urgency="critical",
+                )
+            )
+
+        return GuidanceResponse(
+            generated_at=datetime.now(UTC),
+            do_now=do_now[:6],
+            missing=self._deduplicate_markers(missing)[:10],
+            improve=improve[:5],
+            coverage=GuidanceCoverage(
+                archived_messages=archived_messages,
+                reviewed_messages=reviewed_messages,
+                reviewed_percent=reviewed_percent,
+                structured_facts=structured_facts,
+            ),
+        )
 
     async def people(self) -> list[PersonResponse]:
         tasks = await self._retrieval.tasks()
@@ -360,26 +548,105 @@ class DashboardService:
         return results
 
     def _task_response(self, item: TaskContextItem) -> TaskResponse:
-        priority = "critical" if item.status == "blocked" else "medium"
+        raw_status = (item.status or "open").casefold()
+        status = self._normalize_task_status(raw_status)
+        priority = "critical" if status == "waiting" else "medium"
         deadline = self._deadline_datetime(item.deadline or {})
-        if priority != "critical" and deadline and deadline <= datetime.now(UTC) + timedelta(days=7):
+        if status != "complete" and deadline and deadline < datetime.now(UTC):
+            priority = "critical"
+        elif (
+            status != "complete"
+            and priority != "critical"
+            and deadline
+            and deadline <= datetime.now(UTC) + timedelta(days=7)
+        ):
             priority = "high"
         source = item.sources[0].type if item.sources else "Current state"
-        status = "waiting" if item.status == "blocked" else (item.status or "open")
-        if status == "completed":
-            status = "complete"
+        owner = item.owner_name or item.owner_discord_id or "Unassigned"
+        deadline_label = self._deadline_label(item.deadline or {})
+        markers: list[str] = []
+        if status != "complete" and owner == "Unassigned":
+            markers.append("No owner")
+        if status != "complete" and deadline_label == "TBD":
+            markers.append("No deadline")
+        if status == "waiting":
+            markers.append("Blocked")
+        if deadline and deadline < datetime.now(UTC) and status != "complete":
+            markers.append("Overdue")
+        elif deadline and deadline <= datetime.now(UTC) + timedelta(days=7) and status != "complete":
+            markers.append("Due soon")
         return TaskResponse(
             id=item.task_id,
             task=item.title,
             event_id=item.event_id,
             event=item.event_name or "—",
-            owner=item.owner_name or item.owner_discord_id or "Unassigned",
-            owner_group="execs",
+            owner=owner,
+            owner_group="mine" if self._is_vp_owner(owner) else "execs",
             status=status,
             priority=priority,
-            deadline=self._deadline_label(item.deadline or {}),
+            deadline=deadline_label,
             source=source,
+            markers=markers,
+            next_step=self._task_next_step(status, markers),
         )
+
+    @staticmethod
+    def _normalize_task_status(status: str) -> str:
+        if status in {"complete", "completed", "done", "cancelled"}:
+            return "complete"
+        if status in {"in_progress", "in progress", "started"}:
+            return "in_progress"
+        if status in {"blocked", "waiting", "on_hold", "on hold"}:
+            return "waiting"
+        return "open"
+
+    @staticmethod
+    def _is_vp_owner(owner: str) -> bool:
+        vp_name = os.getenv("VP_NAME", "Salman").strip().casefold()
+        return bool(vp_name) and vp_name in owner.casefold()
+
+    @staticmethod
+    def _task_next_step(status: str, markers: list[str]) -> str:
+        if status == "complete":
+            return "No action needed unless the completion evidence needs verification."
+        if "Overdue" in markers:
+            return "Reconfirm the deadline and finish, delegate, or explicitly reschedule it."
+        if "Blocked" in markers:
+            return "Identify the blocker owner and decide the unblock path."
+        if "No owner" in markers:
+            return "Assign one accountable owner."
+        if "No deadline" in markers:
+            return "Set a concrete due date or explicitly defer it."
+        if status == "in_progress":
+            return "Confirm the next concrete deliverable and checkpoint."
+        return "Confirm ownership, deadline, and the first concrete step."
+
+    @staticmethod
+    def _task_guidance_reason(item: TaskResponse) -> str:
+        if item.markers:
+            return f"This task is marked: {', '.join(item.markers)}."
+        return f"This is an open {item.priority}-priority task assigned to {item.owner}."
+
+    @staticmethod
+    def _task_guidance_question(item: TaskResponse) -> str:
+        if "Blocked" in item.markers:
+            return f"What decision or person would unblock {item.task}?"
+        if "No owner" in item.markers:
+            return f"Who should own {item.task}?"
+        if "No deadline" in item.markers:
+            return f"When should {item.task} be done?"
+        return f"What is the next concrete step for {item.task}?"
+
+    @staticmethod
+    def _deduplicate_markers(items: list[GuidanceMarker]) -> list[GuidanceMarker]:
+        seen: set[str] = set()
+        results: list[GuidanceMarker] = []
+        for item in items:
+            key = item.title.casefold()
+            if key not in seen:
+                seen.add(key)
+                results.append(item)
+        return results
 
     def _task_priority(self, item: TaskContextItem, index: int) -> PriorityItem:
         task = self._task_response(item)

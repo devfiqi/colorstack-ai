@@ -165,6 +165,11 @@ bun run dev
 Open `http://localhost:5173`. FastAPI listens on `http://127.0.0.1:8000`,
 with interactive API documentation at `/docs`.
 
+For a persistent macOS setup that starts after login and restarts failed local
+processes, see [docs/local-services.md](docs/local-services.md). The always-on
+setup includes the dashboard, API, and read-only ingestion/intelligence worker;
+PostgreSQL and Ollama must also remain available.
+
 ## Verification queries
 
 ```bash

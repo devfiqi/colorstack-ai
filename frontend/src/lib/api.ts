@@ -45,6 +45,33 @@ export interface TaskRecord {
   priority: Urgency;
   deadline: string;
   source: string;
+  markers: string[];
+  nextStep: string;
+}
+
+export interface GuidanceMarker {
+  id: string;
+  category: "action" | "missing" | "improvement";
+  title: string;
+  reason: string;
+  recommendation: string;
+  question: string;
+  urgency: Urgency;
+  event: string | null;
+  taskId: string | null;
+}
+
+export interface Guidance {
+  generatedAt: string;
+  doNow: GuidanceMarker[];
+  missing: GuidanceMarker[];
+  improve: GuidanceMarker[];
+  coverage: {
+    archivedMessages: number;
+    reviewedMessages: number;
+    reviewedPercent: number;
+    structuredFacts: number;
+  };
 }
 
 export interface ActivityRecord {
@@ -204,6 +231,7 @@ export const fetchOverview = () => request<Overview>("/api/overview");
 export const fetchEvents = () => request<EventRecord[]>("/api/events");
 export const fetchEvent = (id: string) => request<EventRecord>(`/api/events/${id}`);
 export const fetchTasks = () => request<TaskRecord[]>("/api/tasks");
+export const fetchGuidance = () => request<Guidance>("/api/guidance");
 export const fetchPeople = () => request<Person[]>("/api/people");
 export const fetchActivity = () => request<ActivityRecord[]>("/api/activity");
 export const fetchPlaybooks = () => request<Playbook[]>("/api/playbooks");

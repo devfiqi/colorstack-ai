@@ -8,6 +8,9 @@ from fastapi.testclient import TestClient
 from colorstack_ai.api.app import create_app
 from colorstack_ai.api.schemas import (
     EventListItem,
+    GuidanceCoverage,
+    GuidanceMarker,
+    GuidanceResponse,
     OverviewResponse,
     PriorityItem,
     TaskResponse,
@@ -76,6 +79,32 @@ class FakeDashboardService:
             )
         ]
 
+    async def guidance(self) -> GuidanceResponse:
+        return GuidanceResponse(
+            generated_at=datetime(2026, 10, 3, tzinfo=UTC),
+            do_now=[
+                GuidanceMarker(
+                    id="task-action-task-1",
+                    category="action",
+                    title="Begin judge outreach",
+                    reason="High-priority VP task.",
+                    recommendation="Contact the first three candidates.",
+                    question="Who should be contacted first?",
+                    urgency="high",
+                    event="Adobe Ideathon",
+                    task_id="task-1",
+                )
+            ],
+            missing=[],
+            improve=[],
+            coverage=GuidanceCoverage(
+                archived_messages=100,
+                reviewed_messages=80,
+                reviewed_percent=80,
+                structured_facts=20,
+            ),
+        )
+
     async def event(self, event_id: object) -> None:
         return None
 
@@ -113,6 +142,14 @@ class DashboardApiTest(unittest.TestCase):
                 "urgency": "high",
             },
         )
+
+    def test_guidance_uses_frontend_contract_aliases(self) -> None:
+        with self.client:
+            response = self.client.get("/api/guidance")
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["doNow"][0]["taskId"], "task-1")
+        self.assertEqual(payload["coverage"]["reviewedPercent"], 80)
 
     def test_missing_event_returns_404(self) -> None:
         with self.client:

@@ -7,6 +7,7 @@ from colorstack_ai.api.schemas import (
     ActivityResponse,
     EventDetailResponse,
     EventListItem,
+    GuidanceResponse,
     OverviewResponse,
     PersonResponse,
     PlaybookResponse,
@@ -56,6 +57,13 @@ async def tasks(
         event=event,
         urgency=urgency,
     )
+
+
+@router.get("/guidance", response_model=GuidanceResponse)
+async def guidance(
+    service: DashboardService = Depends(get_dashboard_service),
+) -> GuidanceResponse:
+    return await service.guidance()
 
 
 @router.get("/people", response_model=list[PersonResponse])

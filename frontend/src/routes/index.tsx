@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowRight } from "lucide-react";
 import { fetchOverview } from "@/lib/api";
 import { PriorityBadge } from "@/components/dashboard/badges";
+import { GuidancePanel } from "@/components/dashboard/guidance-panel";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
@@ -89,6 +90,8 @@ function Overview() {
           ))}
         </ol>
       </section>
+
+      <GuidancePanel compact />
 
       <div className="grid gap-9 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <section>

@@ -73,6 +73,35 @@ class TaskResponse(ApiModel):
     priority: str
     deadline: str
     source: str
+    markers: list[str] = Field(default_factory=list)
+    next_step: str = Field(default="Review and decide the next step", serialization_alias="nextStep")
+
+
+class GuidanceMarker(ApiModel):
+    id: str
+    category: str
+    title: str
+    reason: str
+    recommendation: str
+    question: str
+    urgency: str
+    event: str | None = None
+    task_id: str | None = Field(default=None, serialization_alias="taskId")
+
+
+class GuidanceCoverage(ApiModel):
+    archived_messages: int = Field(serialization_alias="archivedMessages")
+    reviewed_messages: int = Field(serialization_alias="reviewedMessages")
+    reviewed_percent: float = Field(serialization_alias="reviewedPercent")
+    structured_facts: int = Field(serialization_alias="structuredFacts")
+
+
+class GuidanceResponse(ApiModel):
+    generated_at: datetime = Field(serialization_alias="generatedAt")
+    do_now: list[GuidanceMarker] = Field(serialization_alias="doNow")
+    missing: list[GuidanceMarker]
+    improve: list[GuidanceMarker]
+    coverage: GuidanceCoverage
 
 
 class PersonResponse(ApiModel):
