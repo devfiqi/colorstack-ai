@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -75,6 +76,11 @@ class TaskResponse(ApiModel):
     source: str
     markers: list[str] = Field(default_factory=list)
     next_step: str = Field(default="Review and decide the next step", serialization_alias="nextStep")
+    manually_updated: bool = Field(default=False, serialization_alias="manuallyUpdated")
+
+
+class TaskStatusUpdate(ApiModel):
+    status: Literal["open", "in_progress", "waiting", "complete"]
 
 
 class GuidanceMarker(ApiModel):

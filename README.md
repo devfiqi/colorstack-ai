@@ -165,6 +165,10 @@ bun run dev
 Open `http://localhost:5173`. FastAPI listens on `http://127.0.0.1:8000`,
 with interactive API documentation at `/docs`.
 
+The VP task board supports explicit manual completion and reopening. These
+choices are stored as append-only local overrides so the dashboard can honor
+the VP's decision without posting to Discord or changing any external system.
+
 For a persistent macOS setup that starts after login and restarts failed local
 processes, see [docs/local-services.md](docs/local-services.md). The always-on
 setup includes the dashboard, API, and read-only ingestion/intelligence worker;

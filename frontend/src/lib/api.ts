@@ -47,6 +47,7 @@ export interface TaskRecord {
   source: string;
   markers: string[];
   nextStep: string;
+  manuallyUpdated: boolean;
 }
 
 export interface GuidanceMarker {
@@ -232,6 +233,8 @@ export const fetchEvents = () => request<EventRecord[]>("/api/events");
 export const fetchEvent = (id: string) => request<EventRecord>(`/api/events/${id}`);
 export const fetchTasks = () => request<TaskRecord[]>("/api/tasks");
 export const fetchGuidance = () => request<Guidance>("/api/guidance");
+export const updateTaskStatus = (id: string, status: TaskStatus) =>
+  mutate<TaskRecord>(`/api/tasks/${id}`, "PATCH", { status });
 export const fetchPeople = () => request<Person[]>("/api/people");
 export const fetchActivity = () => request<ActivityRecord[]>("/api/activity");
 export const fetchPlaybooks = () => request<Playbook[]>("/api/playbooks");

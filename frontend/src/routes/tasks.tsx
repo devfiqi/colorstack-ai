@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { Search } from "lucide-react";
-import { fetchTasks, type TaskRecord, type TaskStatus } from "@/lib/api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Check, LoaderCircle, RotateCcw, Search } from "lucide-react";
+import { fetchTasks, updateTaskStatus, type TaskRecord, type TaskStatus } from "@/lib/api";
 import { Chip, PriorityBadge } from "@/components/dashboard/badges";
 import { FilterTabs, PageHeader } from "@/components/dashboard/page-header";
 import { GuidancePanel } from "@/components/dashboard/guidance-panel";
@@ -43,7 +43,16 @@ function markerTone(marker: string): "critical" | "warning" | "info" | "neutral"
   return "neutral";
 }
 
-function TaskCard({ task }: { task: TaskRecord }) {
+function TaskCard({
+  task,
+  busy,
+  onToggleComplete,
+}: {
+  task: TaskRecord;
+  busy: boolean;
+  onToggleComplete: (task: TaskRecord) => void;
+}) {
+  const complete = task.status === "complete";
   return (
     <article className="rounded-md border border-border bg-panel p-3 shadow-[0_1px_1px_oklch(0.21_0.008_264.7/3%)]">
       <div className="flex items-start justify-between gap-2">
@@ -83,11 +92,32 @@ function TaskCard({ task }: { task: TaskRecord }) {
       <p className="mt-2 rounded bg-surface px-2 py-1.5 text-[11.5px] leading-relaxed">
         <span className="font-medium">Next:</span> {task.nextStep}
       </p>
+      <button
+        type="button"
+        onClick={() => onToggleComplete(task)}
+        disabled={busy}
+        className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-md border border-border px-2 py-1.5 text-[11.5px] font-medium transition-colors hover:bg-accent disabled:cursor-wait disabled:opacity-60"
+      >
+        {busy ? (
+          <LoaderCircle className="size-3.5 animate-spin" />
+        ) : complete ? (
+          <RotateCcw className="size-3.5" />
+        ) : (
+          <Check className="size-3.5" />
+        )}
+        {complete ? "Reopen task" : "Mark complete"}
+      </button>
+      {task.manuallyUpdated && (
+        <p className="mt-1.5 text-center text-[10.5px] text-muted-foreground">
+          Status set manually in this workspace
+        </p>
+      )}
     </article>
   );
 }
 
 function TasksPage() {
+  const queryClient = useQueryClient();
   const [filter, setFilter] = useState<Filter>("mine");
   const [query, setQuery] = useState("");
   const {
@@ -99,6 +129,24 @@ function TasksPage() {
     queryFn: fetchTasks,
     refetchInterval: 30_000,
   });
+  const statusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: TaskStatus }) =>
+      updateTaskStatus(id, status),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["tasks"] }),
+        queryClient.invalidateQueries({ queryKey: ["guidance"] }),
+        queryClient.invalidateQueries({ queryKey: ["overview"] }),
+      ]);
+    },
+  });
+
+  const toggleComplete = (task: TaskRecord) => {
+    statusMutation.mutate({
+      id: task.id,
+      status: task.status === "complete" ? "open" : "complete",
+    });
+  };
 
   const data = useMemo(
     () =>
@@ -150,6 +198,12 @@ function TasksPage() {
 
       <GuidancePanel compact />
 
+      {statusMutation.error && (
+        <p className="rounded-md border border-critical/25 bg-critical-muted px-3 py-2 text-[12px] text-critical-foreground">
+          Could not update the task: {statusMutation.error.message}
+        </p>
+      )}
+
       <section className="overflow-x-auto pb-2">
         <div className="grid min-w-[1040px] grid-cols-4 gap-3">
           {columns.map((column) => {
@@ -167,7 +221,12 @@ function TasksPage() {
                 </div>
                 <div className="space-y-2">
                   {columnTasks.map((task) => (
-                    <TaskCard key={task.id} task={task} />
+                    <TaskCard
+                      key={task.id}
+                      task={task}
+                      busy={statusMutation.isPending && statusMutation.variables?.id === task.id}
+                      onToggleComplete={toggleComplete}
+                    />
                   ))}
                   {columnTasks.length === 0 && (
                     <p className="rounded-md border border-dashed border-border px-3 py-8 text-center text-[11.5px] text-muted-foreground">

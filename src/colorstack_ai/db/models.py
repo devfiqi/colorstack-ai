@@ -333,6 +333,28 @@ class TaskRecord(Base):
     )
 
 
+class TaskStatusOverrideRecord(Base):
+    """Append-only status decisions made explicitly by the VP in the UI."""
+
+    __tablename__ = "task_status_overrides"
+    __table_args__ = (
+        Index("ix_task_status_overrides_task_created", "task_id", "created_at"),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    task_id: Mapped[UUID] = mapped_column(
+        ForeignKey("tasks.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    actor: Mapped[str] = mapped_column(String(64), nullable=False, default="VP")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+
+
 class CurrentStateValueRecord(Base):
     __tablename__ = "current_state_values"
     __table_args__ = (

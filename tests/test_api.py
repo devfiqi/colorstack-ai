@@ -105,6 +105,26 @@ class FakeDashboardService:
             ),
         )
 
+    async def update_task_status(
+        self,
+        task_id: object,
+        status: str,
+    ) -> TaskResponse:
+        self.updated_task = (str(task_id), status)
+        return TaskResponse(
+            id=str(task_id),
+            task="Begin judge outreach",
+            event_id="11111111-1111-1111-1111-111111111111",
+            event="Adobe Ideathon",
+            owner="Salman",
+            owner_group="mine",
+            status=status,
+            priority="medium",
+            deadline="Oct 3",
+            source="Current state",
+            manually_updated=True,
+        )
+
     async def event(self, event_id: object) -> None:
         return None
 
@@ -150,6 +170,18 @@ class DashboardApiTest(unittest.TestCase):
         payload = response.json()
         self.assertEqual(payload["doNow"][0]["taskId"], "task-1")
         self.assertEqual(payload["coverage"]["reviewedPercent"], 80)
+
+    def test_vp_can_mark_task_complete(self) -> None:
+        task_id = "11111111-1111-1111-1111-111111111111"
+        with self.client:
+            response = self.client.patch(
+                f"/api/tasks/{task_id}",
+                json={"status": "complete"},
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "complete")
+        self.assertTrue(response.json()["manuallyUpdated"])
+        self.assertEqual(self.service.updated_task, (task_id, "complete"))
 
     def test_missing_event_returns_404(self) -> None:
         with self.client:

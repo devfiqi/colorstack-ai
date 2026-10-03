@@ -34,6 +34,7 @@ from colorstack_ai.db.models import (
     PipelineRunRecord,
     StateChangeRecord,
     TaskRecord,
+    TaskStatusOverrideRecord,
 )
 from colorstack_ai.db.session import Database
 
@@ -49,8 +50,8 @@ class DashboardService:
         context = package.context
         if context is None or context.kind != "organization":
             raise RuntimeError("Organization context was not available.")
-        tasks = await self._retrieval.tasks()
-        open_tasks = [task for task in tasks if task.status not in {"completed", "cancelled"}]
+        tasks = await self._task_responses()
+        open_tasks = [task for task in tasks if task.status != "complete"]
         events = [await self._event_list_item(UUID(item.event_id)) for item in context.active_events]
         events = [item for item in events if item is not None]
         priorities = await self._latest_priorities()
@@ -173,7 +174,7 @@ class DashboardService:
         event: str | None = None,
         urgency: str | None = None,
     ) -> list[TaskResponse]:
-        tasks = [self._task_response(item) for item in await self._retrieval.tasks()]
+        tasks = await self._task_responses()
         return [
             item
             for item in tasks
@@ -183,9 +184,29 @@ class DashboardService:
             and (urgency is None or item.priority == urgency)
         ]
 
+    async def update_task_status(
+        self,
+        task_id: UUID,
+        status: str,
+    ) -> TaskResponse | None:
+        async with self._database.sessions.begin() as session:
+            task = await session.get(TaskRecord, task_id)
+            if task is None:
+                return None
+            session.add(
+                TaskStatusOverrideRecord(
+                    task_id=task_id,
+                    status=status,
+                    actor=os.getenv("VP_NAME", "Salman").strip() or "VP",
+                )
+            )
+        return next(
+            (item for item in await self._task_responses() if item.id == str(task_id)),
+            None,
+        )
+
     async def guidance(self) -> GuidanceResponse:
-        task_items = await self._retrieval.tasks()
-        tasks = [self._task_response(item) for item in task_items]
+        tasks = await self._task_responses()
         open_tasks = [item for item in tasks if item.status != "complete"]
         urgency_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
         open_tasks.sort(
@@ -381,7 +402,7 @@ class DashboardService:
         if context is None or context.kind != "person":
             return None
         name = context.name or person_id
-        tasks = [self._task_response(item) for item in context.assigned_tasks]
+        tasks = await self._task_responses(context.assigned_tasks)
         unresolved = [
             item.value or item.task or "Unresolved commitment"
             for item in context.commitments
@@ -547,8 +568,36 @@ class DashboardService:
             )
         return results
 
-    def _task_response(self, item: TaskContextItem) -> TaskResponse:
-        raw_status = (item.status or "open").casefold()
+    async def _task_responses(
+        self,
+        task_items: list[TaskContextItem] | None = None,
+    ) -> list[TaskResponse]:
+        overrides: dict[UUID, str] = {}
+        async with self._database.sessions() as session:
+            records = list(
+                (
+                    await session.scalars(
+                        select(TaskStatusOverrideRecord).order_by(
+                            TaskStatusOverrideRecord.created_at.desc(),
+                            TaskStatusOverrideRecord.id.desc(),
+                        )
+                    )
+                ).all()
+            )
+        for record in records:
+            overrides.setdefault(record.task_id, record.status)
+        items = task_items if task_items is not None else await self._retrieval.tasks()
+        return [
+            self._task_response(item, overrides.get(UUID(item.task_id)))
+            for item in items
+        ]
+
+    def _task_response(
+        self,
+        item: TaskContextItem,
+        status_override: str | None = None,
+    ) -> TaskResponse:
+        raw_status = (status_override or item.status or "open").casefold()
         status = self._normalize_task_status(raw_status)
         priority = "critical" if status == "waiting" else "medium"
         deadline = self._deadline_datetime(item.deadline or {})
@@ -588,6 +637,7 @@ class DashboardService:
             source=source,
             markers=markers,
             next_step=self._task_next_step(status, markers),
+            manually_updated=status_override is not None,
         )
 
     @staticmethod
@@ -648,11 +698,10 @@ class DashboardService:
                 results.append(item)
         return results
 
-    def _task_priority(self, item: TaskContextItem, index: int) -> PriorityItem:
-        task = self._task_response(item)
+    def _task_priority(self, task: TaskResponse, index: int) -> PriorityItem:
         return PriorityItem(
-            id=f"task-{item.task_id}-{index}",
-            title=item.title,
+            id=f"task-{task.id}-{index}",
+            title=task.task,
             owner=task.owner,
             due=task.deadline,
             priority=task.priority,

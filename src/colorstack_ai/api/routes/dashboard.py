@@ -12,6 +12,7 @@ from colorstack_ai.api.schemas import (
     PersonResponse,
     PlaybookResponse,
     TaskResponse,
+    TaskStatusUpdate,
 )
 from colorstack_ai.api.service import DashboardService
 
@@ -57,6 +58,18 @@ async def tasks(
         event=event,
         urgency=urgency,
     )
+
+
+@router.patch("/tasks/{task_id}", response_model=TaskResponse)
+async def update_task_status(
+    task_id: UUID,
+    update: TaskStatusUpdate,
+    service: DashboardService = Depends(get_dashboard_service),
+) -> TaskResponse:
+    task = await service.update_task_status(task_id, update.status)
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return task
 
 
 @router.get("/guidance", response_model=GuidanceResponse)
