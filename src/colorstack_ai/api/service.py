@@ -52,11 +52,24 @@ class DashboardService:
             raise RuntimeError("Organization context was not available.")
         tasks = await self._task_responses()
         open_tasks = [task for task in tasks if task.status != "complete"]
+        urgency_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+        open_tasks.sort(
+            key=lambda task: (
+                urgency_order.get(task.priority, 4),
+                task.owner_group != "mine",
+                task.deadline == "TBD",
+                task.task.casefold(),
+            )
+        )
         events = [await self._event_list_item(UUID(item.event_id)) for item in context.active_events]
         events = [item for item in events if item is not None]
-        priorities = await self._latest_priorities()
-        if not priorities:
-            priorities = [self._task_priority(task, index) for index, task in enumerate(open_tasks[:3])]
+        priorities = await self._latest_priorities(open_tasks)
+        linked_task_ids = {item.task_id for item in priorities if item.task_id}
+        for task in open_tasks:
+            if len(priorities) >= 3:
+                break
+            if task.id not in linked_task_ids:
+                priorities.append(self._task_priority(task, len(priorities)))
         week_end = datetime.now(UTC) + timedelta(days=7)
         deadlines_this_week = sum(
             1
@@ -542,7 +555,10 @@ class DashboardService:
             value = await session.scalar(select(field).where(model.id == UUID(entity_id)))
         return value or "Organization"
 
-    async def _latest_priorities(self) -> list[PriorityItem]:
+    async def _latest_priorities(
+        self,
+        open_tasks: list[TaskResponse],
+    ) -> list[PriorityItem]:
         brief = await self.latest_brief()
         if not brief:
             return []
@@ -553,17 +569,23 @@ class DashboardService:
         if not isinstance(raw, list):
             return []
         results = []
+        task_by_title = {task.task.strip().casefold(): task for task in open_tasks}
         for index, item in enumerate(raw[:3]):
             if not isinstance(item, dict):
+                continue
+            title = str(item.get("title", "Priority"))
+            task = task_by_title.get(title.strip().casefold())
+            if task is None:
                 continue
             results.append(
                 PriorityItem(
                     id=f"brief-{index}",
-                    title=str(item.get("title", "Priority")),
+                    title=title,
                     owner=str(item.get("owner_name") or item.get("owner_discord_id") or "Unassigned"),
                     due=self._iso_deadline_label(item.get("deadline")),
                     priority=str(item.get("urgency", "high")),
                     context=str(item.get("reason", "From the latest daily brief.")),
+                    task_id=task.id,
                 )
             )
         return results
@@ -706,6 +728,7 @@ class DashboardService:
             due=task.deadline,
             priority=task.priority,
             context=f"{task.event}; {task.source}",
+            task_id=task.id,
         )
 
     @staticmethod

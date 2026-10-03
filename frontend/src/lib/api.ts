@@ -109,6 +109,7 @@ export interface Priority {
   due: string;
   priority: Urgency;
   context: string;
+  taskId: string | null;
 }
 
 export interface Overview {

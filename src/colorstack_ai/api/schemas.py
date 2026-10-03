@@ -15,6 +15,7 @@ class PriorityItem(ApiModel):
     due: str
     priority: str
     context: str
+    task_id: str | None = Field(default=None, serialization_alias="taskId")
 
 
 class EventListItem(ApiModel):

@@ -55,6 +55,7 @@ class FakeDashboardService:
                     due="Today",
                     priority="high",
                     context="No judges confirmed.",
+                    task_id="task-1",
                 )
             ],
             events=[event],
@@ -146,6 +147,7 @@ class DashboardApiTest(unittest.TestCase):
         payload = response.json()
         self.assertEqual(payload["activeEvents"], 1)
         self.assertEqual(payload["events"][0]["nextAction"], "Begin judge outreach")
+        self.assertEqual(payload["priorities"][0]["taskId"], "task-1")
 
     def test_task_filters_are_forwarded(self) -> None:
         with self.client:

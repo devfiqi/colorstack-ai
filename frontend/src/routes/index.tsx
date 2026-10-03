@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowRight } from "lucide-react";
-import { fetchOverview } from "@/lib/api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowRight, Check, LoaderCircle } from "lucide-react";
+import { fetchOverview, updateTaskStatus } from "@/lib/api";
 import { PriorityBadge } from "@/components/dashboard/badges";
 import { GuidancePanel } from "@/components/dashboard/guidance-panel";
 import { cn } from "@/lib/utils";
@@ -52,7 +52,18 @@ function readinessTone(v: number) {
 }
 
 function Overview() {
+  const queryClient = useQueryClient();
   const { data, isPending, error } = useQuery({ queryKey: ["overview"], queryFn: fetchOverview });
+  const completeTask = useMutation({
+    mutationFn: (taskId: string) => updateTaskStatus(taskId, "complete"),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["overview"] }),
+        queryClient.invalidateQueries({ queryKey: ["tasks"] }),
+        queryClient.invalidateQueries({ queryKey: ["guidance"] }),
+      ]);
+    },
+  });
   if (isPending)
     return <p className="text-sm text-muted-foreground">Loading operational context…</p>;
   if (error) throw error;
@@ -86,9 +97,29 @@ function Overview() {
               </span>
               <span className="w-20 text-[12px] text-muted-foreground">{p.due}</span>
               <PriorityBadge priority={p.priority} />
+              {p.taskId && (
+                <button
+                  type="button"
+                  onClick={() => completeTask.mutate(p.taskId!)}
+                  disabled={completeTask.isPending}
+                  className="flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[11.5px] font-medium transition-colors hover:bg-accent disabled:cursor-wait disabled:opacity-60"
+                >
+                  {completeTask.isPending && completeTask.variables === p.taskId ? (
+                    <LoaderCircle className="size-3 animate-spin" />
+                  ) : (
+                    <Check className="size-3" />
+                  )}
+                  Complete
+                </button>
+              )}
             </li>
           ))}
         </ol>
+        {completeTask.error && (
+          <p className="mt-2 text-[12px] text-critical-foreground">
+            Could not complete the task: {completeTask.error.message}
+          </p>
+        )}
       </section>
 
       <GuidancePanel compact />
