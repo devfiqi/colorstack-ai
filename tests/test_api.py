@@ -1,7 +1,7 @@
 import unittest
 from datetime import UTC, datetime
 from typing import cast
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
 
@@ -133,13 +133,20 @@ class DashboardApiTest(unittest.TestCase):
             },
             clear=False,
         ):
-            with self.client:
-                response = self.client.get("/api/system")
+            with patch(
+                "colorstack_ai.api.routes.system.PipelineRepository.latest",
+                new_callable=AsyncMock,
+                return_value=None,
+            ):
+                with self.client:
+                    response = self.client.get("/api/system")
         self.assertEqual(response.status_code, 200)
         payload = response.json()
         self.assertEqual(payload["discord"], "Configured")
         self.assertEqual(payload["extraction"], "Configured")
         self.assertEqual(payload["reasoning"], "Configured")
+        self.assertTrue(payload["advisoryOnly"])
+        self.assertFalse(payload["automaticActions"])
 
     def test_system_status_alias(self) -> None:
         with patch.dict(
@@ -147,6 +154,11 @@ class DashboardApiTest(unittest.TestCase):
             {"DAILY_BRIEF_ENABLED": "false"},
             clear=False,
         ):
-            with self.client:
-                response = self.client.get("/api/system/status")
+            with patch(
+                "colorstack_ai.api.routes.system.PipelineRepository.latest",
+                new_callable=AsyncMock,
+                return_value=None,
+            ):
+                with self.client:
+                    response = self.client.get("/api/system/status")
         self.assertEqual(response.status_code, 200)

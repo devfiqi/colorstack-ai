@@ -24,6 +24,11 @@ class BriefScheduler(Protocol):
     def shutdown(self) -> None: ...
 
 
+class IntelligencePipeline(Protocol):
+    def start(self) -> None: ...
+    async def shutdown(self) -> None: ...
+
+
 def create_intents() -> discord.Intents:
     intents = discord.Intents.none()
     intents.guilds = True
@@ -39,9 +44,13 @@ class DiscordIngestionClient(discord.Client):
         self._store = store
         self._initialization_started = False
         self._brief_scheduler: BriefScheduler | None = None
+        self._intelligence_pipeline: IntelligencePipeline | None = None
 
     def set_brief_scheduler(self, scheduler: BriefScheduler) -> None:
         self._brief_scheduler = scheduler
+
+    def set_intelligence_pipeline(self, pipeline: IntelligencePipeline) -> None:
+        self._intelligence_pipeline = pipeline
 
     async def on_ready(self) -> None:
         if self._initialization_started:
@@ -85,6 +94,8 @@ class DiscordIngestionClient(discord.Client):
         logger.info("Newly stored: %s", f"{result.inserted:,}")
         if result.failed_channels:
             logger.warning("Skipped channels: %d", result.failed_channels)
+        if self._intelligence_pipeline is not None:
+            self._intelligence_pipeline.start()
         if self._brief_scheduler is not None:
             self._brief_scheduler.start()
         logger.info("Listening for new messages, edits, and deletions...")
@@ -92,6 +103,8 @@ class DiscordIngestionClient(discord.Client):
     async def close(self) -> None:
         if self._brief_scheduler is not None:
             self._brief_scheduler.shutdown()
+        if self._intelligence_pipeline is not None:
+            await self._intelligence_pipeline.shutdown()
         await super().close()
 
     async def on_message(self, message: discord.Message) -> None:

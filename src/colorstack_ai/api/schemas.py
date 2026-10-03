@@ -109,3 +109,16 @@ class SystemResponse(ApiModel):
     reasoning: str
     daily_brief_enabled: bool = Field(serialization_alias="dailyBriefEnabled")
     daily_brief_schedule: str = Field(serialization_alias="dailyBriefSchedule")
+    pipeline_enabled: bool = Field(serialization_alias="pipelineEnabled")
+    pipeline_interval_seconds: float = Field(
+        serialization_alias="pipelineIntervalSeconds"
+    )
+    pipeline_status: str = Field(serialization_alias="pipelineStatus")
+    pipeline_last_run_at: datetime | None = Field(
+        serialization_alias="pipelineLastRunAt"
+    )
+    pipeline_stages: list[dict[str, object]] = Field(
+        serialization_alias="pipelineStages"
+    )
+    advisory_only: bool = Field(serialization_alias="advisoryOnly")
+    automatic_actions: bool = Field(serialization_alias="automaticActions")

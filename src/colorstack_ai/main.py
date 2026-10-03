@@ -2,17 +2,19 @@ import asyncio
 import logging
 from datetime import date
 
-from colorstack_ai.briefing.delivery import DiscordBriefDelivery
 from colorstack_ai.briefing.factory import create_briefing_service
 from colorstack_ai.briefing.scheduler import DailyBriefScheduler
 from colorstack_ai.config import (
     load_daily_brief_environment,
     load_environment,
+    load_extraction_environment,
+    load_pipeline_environment,
     load_reasoning_environment,
 )
 from colorstack_ai.db.session import Database
 from colorstack_ai.discord.client import DiscordIngestionClient
 from colorstack_ai.ingestion.postgres_store import PostgresMessageStore
+from colorstack_ai.pipeline.service import create_pipeline
 
 
 async def main() -> None:
@@ -21,29 +23,30 @@ async def main() -> None:
     await database.check_connection()
     store = PostgresMessageStore(database)
     client = DiscordIngestionClient(store)
+    pipeline_settings = load_pipeline_environment()
+    if pipeline_settings.enabled:
+        extraction_environment = load_extraction_environment()
+        client.set_intelligence_pipeline(
+            create_pipeline(database, extraction_environment, pipeline_settings)
+        )
     brief_settings = load_daily_brief_environment()
     if brief_settings.enabled:
-        assert brief_settings.channel_id is not None
-        channel_id = brief_settings.channel_id
         reasoning_environment = load_reasoning_environment()
         service = create_briefing_service(
             database,
             reasoning_environment,
-            channel_id=channel_id,
+            channel_id=None,
         )
 
-        async def send_scheduled(scheduled_date: date) -> object:
-            return await service.run_scheduled(
-                scheduled_date,
-                DiscordBriefDelivery(client, channel_id),
-            )
+        async def generate_scheduled(scheduled_date: date) -> object:
+            return await service.generate_scheduled(scheduled_date)
 
         client.set_brief_scheduler(
             DailyBriefScheduler(
                 enabled=True,
                 scheduled_time=brief_settings.scheduled_time,
                 timezone=brief_settings.timezone,
-                job=send_scheduled,
+                job=generate_scheduled,
             )
         )
 

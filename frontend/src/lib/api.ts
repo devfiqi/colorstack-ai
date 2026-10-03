@@ -116,6 +116,13 @@ export interface SystemStatus {
   reasoning: string;
   dailyBriefEnabled: boolean;
   dailyBriefSchedule: string;
+  pipelineEnabled: boolean;
+  pipelineIntervalSeconds: number;
+  pipelineStatus: string;
+  pipelineLastRunAt: string | null;
+  pipelineStages: Array<{ name?: string; succeeded?: boolean; error?: string | null }>;
+  advisoryOnly: boolean;
+  automaticActions: boolean;
 }
 
 const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:8000").replace(/\/$/, "");

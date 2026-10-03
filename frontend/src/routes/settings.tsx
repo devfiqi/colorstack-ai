@@ -18,6 +18,15 @@ function SettingsPage() {
     { label: "Workspace", value: "ColorStack Exec Ops" },
     { label: "Brief delivery", value: data.dailyBriefSchedule },
     { label: "Automatic brief", value: data.dailyBriefEnabled ? "Enabled" : "Disabled" },
+    { label: "Intelligence pipeline", value: data.pipelineStatus },
+    {
+      label: "Last pipeline run",
+      value: data.pipelineLastRunAt
+        ? new Date(data.pipelineLastRunAt).toLocaleString()
+        : "Not yet run",
+    },
+    { label: "Operating mode", value: data.advisoryOnly ? "Advisory only" : "Unknown" },
+    { label: "Automatic external actions", value: data.automaticActions ? "Enabled" : "Disabled" },
   ];
   const integrations = [
     { name: "Discord", detail: "Ingestion and configured brief delivery", status: data.discord },

@@ -88,6 +88,26 @@ class BriefingService:
         await self._deliver(run_id, result.rendered_text, delivery)
         return result
 
+    async def generate_scheduled(
+        self,
+        scheduled_date: date,
+        *,
+        now: datetime | None = None,
+    ) -> BriefGenerationResult | None:
+        """Generate the proactive brief without taking an outbound action."""
+        run_id = await self._repository.start(
+            scheduled_date=scheduled_date,
+            manually_triggered=False,
+            channel_id=None,
+        )
+        if run_id is None:
+            return None
+        return await self._generate(
+            run_id,
+            now or datetime.now(UTC),
+            previewed=False,
+        )
+
     async def _generate_manual(
         self,
         *,

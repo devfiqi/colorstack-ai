@@ -50,6 +50,9 @@ message archive as sensitive organizational data.
   authorization, and deployment controls are added first.
 - Any hosted or non-loopback API/dashboard deployment must add authentication,
   authorization, audit logging, and data-retention controls first.
+- Keep the continuous intelligence pipeline advisory-only. Scheduled jobs may
+  update local derived state and generate reviewable recommendations, but must
+  not send messages or mutate external systems.
 
 ## Reporting a security issue
 

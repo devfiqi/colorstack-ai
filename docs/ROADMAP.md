@@ -155,6 +155,19 @@ Status: implemented and automatically verified.
 - Run the API and frontend locally on ports 8000 and 5173.
 - Preserve Phase 1–8 service and persistence boundaries.
 
+## Current integration — Continuous advisory pipeline
+
+Status: implemented.
+
+- Start local extraction, state reconciliation, and playbook evaluation after
+  Discord backfill.
+- Process new work on a configurable interval and retry failures periodically.
+- Isolate stage failures so persisted work can continue downstream.
+- Record pipeline health and expose freshness through the system dashboard.
+- Generate scheduled briefs for review without automatic external delivery.
+- Enforce an advisory-only product boundary; the AI recommends what the VP
+  should do and never takes external action on its own.
+
 ## Later — Reporting and learning
 
 - Answer leadership questions from structured, source-linked context.

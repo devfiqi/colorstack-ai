@@ -9,7 +9,14 @@ organizational context and proactive executive updates.
 Phases 1–8 and the Phase 10 local dashboard are implemented. Discord ingestion,
 PostgreSQL persistence, local extraction, organizational state, event
 playbooks, bounded context, cloud reasoning, and daily executive briefs feed a
-read-only FastAPI dashboard. Phase 9 interactive AI is intentionally skipped.
+read-only FastAPI dashboard. The bot now runs extraction, state reconciliation,
+and playbook evaluation continuously after Discord backfill. Phase 9
+interactive AI is intentionally skipped.
+
+ColorStack AI is advisory-only: it may update its internal evidence-backed
+state and generate recommendations, but it never takes an external action on
+its own. Scheduled briefs are generated for review; sending a brief requires an
+explicit manual command.
 
 ## System direction
 
@@ -72,6 +79,10 @@ Configure local extraction:
 OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_MODEL=your-installed-model
 EXTRACTION_VERSION=v2
+PIPELINE_ENABLED=true
+PIPELINE_INTERVAL_SECONDS=60
+PIPELINE_BATCH_SIZE=100
+PIPELINE_RETRY_EVERY_CYCLES=10
 ```
 
 ```bash
@@ -112,7 +123,7 @@ python -m colorstack_ai.context org
 python -m colorstack_ai.context query "What are we missing for Adobe?"
 ```
 
-Generate or deliver the daily brief:
+Generate or explicitly deliver the daily brief:
 
 ```bash
 python -m colorstack_ai.briefing preview
@@ -120,6 +131,10 @@ python -m colorstack_ai.briefing generate
 python -m colorstack_ai.briefing send
 python -m colorstack_ai.briefing schedule
 ```
+
+`DAILY_BRIEF_ENABLED=true` schedules generation only. The generated brief is
+available in the dashboard. `send` is the only command that delivers it to
+Discord and must be invoked directly by a user.
 
 Run the local dashboard in two terminals:
 

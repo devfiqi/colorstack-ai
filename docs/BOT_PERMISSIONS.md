@@ -39,4 +39,6 @@ Any future outbound-message feature must:
 - Never use a channel name as the security boundary.
 - Reject DMs and thread destinations.
 
-The current application has no outbound messaging feature.
+The current application supports only explicit, manually invoked brief
+delivery. The continuous pipeline and scheduled brief generator have no
+outbound messaging capability.

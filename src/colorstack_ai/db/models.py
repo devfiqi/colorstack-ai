@@ -773,3 +773,22 @@ class DailyBriefRunRecord(Base):
         nullable=False,
         server_default=func.now(),
     )
+
+
+class PipelineRunRecord(Base):
+    __tablename__ = "pipeline_runs"
+    __table_args__ = (
+        Index("ix_pipeline_runs_finished_at", "finished_at"),
+        Index("ix_pipeline_runs_status", "status"),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    cycle_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    stages: Mapped[list[object]] = mapped_column(JSONB, nullable=False)
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    finished_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )

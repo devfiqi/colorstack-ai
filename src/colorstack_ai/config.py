@@ -43,6 +43,13 @@ class DailyBriefEnvironment(BaseModel):
     channel_id: str | None
 
 
+class PipelineEnvironment(BaseModel):
+    enabled: bool
+    interval_seconds: float
+    batch_size: int
+    retry_every_cycles: int
+
+
 def _load_database_url() -> SecretStr:
     database_url = os.getenv("DATABASE_URL", "").strip()
     if not database_url:
@@ -211,11 +218,45 @@ def load_daily_brief_environment(
     channel_id = os.getenv("DAILY_BRIEF_CHANNEL_ID", "").strip() or None
     if channel_id is not None and not channel_id.isdecimal():
         raise RuntimeError("DAILY_BRIEF_CHANNEL_ID must be a Discord channel ID.")
-    if (enabled_raw == "true" or require_channel) and channel_id is None:
+    if require_channel and channel_id is None:
         raise RuntimeError("DAILY_BRIEF_CHANNEL_ID is required for delivery.")
     return DailyBriefEnvironment(
         enabled=enabled_raw == "true",
         scheduled_time=scheduled_time,
         timezone=timezone,
         channel_id=channel_id,
+    )
+
+
+def load_pipeline_environment() -> PipelineEnvironment:
+    enabled_raw = os.getenv("PIPELINE_ENABLED", "true").strip().casefold()
+    if enabled_raw not in {"true", "false"}:
+        raise RuntimeError("PIPELINE_ENABLED must be true or false.")
+
+    try:
+        interval_seconds = float(os.getenv("PIPELINE_INTERVAL_SECONDS", "60"))
+    except ValueError as error:
+        raise RuntimeError("PIPELINE_INTERVAL_SECONDS must be numeric.") from error
+    if interval_seconds <= 0:
+        raise RuntimeError("PIPELINE_INTERVAL_SECONDS must be positive.")
+
+    try:
+        batch_size = int(os.getenv("PIPELINE_BATCH_SIZE", "100"))
+    except ValueError as error:
+        raise RuntimeError("PIPELINE_BATCH_SIZE must be an integer.") from error
+    if batch_size <= 0:
+        raise RuntimeError("PIPELINE_BATCH_SIZE must be positive.")
+
+    try:
+        retry_every_cycles = int(os.getenv("PIPELINE_RETRY_EVERY_CYCLES", "10"))
+    except ValueError as error:
+        raise RuntimeError("PIPELINE_RETRY_EVERY_CYCLES must be an integer.") from error
+    if retry_every_cycles <= 0:
+        raise RuntimeError("PIPELINE_RETRY_EVERY_CYCLES must be positive.")
+
+    return PipelineEnvironment(
+        enabled=enabled_raw == "true",
+        interval_seconds=interval_seconds,
+        batch_size=batch_size,
+        retry_every_cycles=retry_every_cycles,
     )

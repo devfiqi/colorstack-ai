@@ -84,7 +84,11 @@ React dashboard                  implemented locally
 - `reasoning/` runs bounded structured context through the configured provider
   and records latency, usage, and estimated cost.
 - `briefing/` constructs, formats, schedules, records, and delivers daily
-  executive briefs with duplicate prevention.
+  executive briefs with duplicate prevention. Scheduled runs generate for
+  review; Discord delivery is manual-only.
+- `pipeline/` continuously runs local extraction, state reconciliation, and
+  event-playbook evaluation after Discord backfill. Stage failures are isolated
+  and every cycle records health for the dashboard.
 - `api/` maps existing context and persistence services to read-only dashboard
   endpoints without duplicating state or playbook logic.
 - `frontend/` contains the imported React/TanStack Router dashboard, now backed
@@ -97,10 +101,27 @@ React dashboard                  implemented locally
 3. Discover readable text channels and active or archived threads.
 4. Backfill each channel independently; a channel failure does not stop others.
 5. Upsert messages and related snapshots by Discord message ID.
-6. Continue processing live creates, raw edits, and deletion events.
+6. Start the local intelligence pipeline after backfill.
+7. Continuously extract new messages, reconcile new facts, retry failed or
+   unresolved work periodically, and reevaluate active-event playbooks.
+8. Continue processing live creates, raw edits, and deletion events.
 
 The event handlers are active during backfill, preventing a gap between history
 collection and live ingestion.
+
+## Advisory boundary
+
+The runtime may ingest source material, update derived internal state, evaluate
+requirements, and generate recommendations. It does not send messages, assign
+work, edit calendars or documents, or take another external action
+automatically. Scheduled daily briefs are stored for dashboard review. Discord
+delivery remains an explicit CLI action initiated by a user.
+
+Pipeline stages fail independently so an unavailable local model does not stop
+reconciliation or playbook evaluation over already-persisted facts. Cycle
+status and per-stage errors are stored in `pipeline_runs`; the system API marks
+the pipeline stale when it has not completed within the configured freshness
+window.
 
 ## Storage boundary
 
