@@ -6,6 +6,7 @@ import {
   Cpu,
   LayoutDashboard,
   ListChecks,
+  MessageSquareText,
   Settings,
   FileText,
   Users,
@@ -16,6 +17,7 @@ const primary = [
   { label: "Overview", to: "/", icon: LayoutDashboard },
   { label: "Events", to: "/events", icon: CalendarDays },
   { label: "Tasks", to: "/tasks", icon: ListChecks },
+  { label: "Ask AI", to: "/ask", icon: MessageSquareText },
   { label: "Brief", to: "/brief", icon: FileText },
   { label: "Activity", to: "/activity", icon: Activity },
 ] as const;

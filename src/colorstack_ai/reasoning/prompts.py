@@ -20,6 +20,8 @@ Hard constraints:
 - never invent an owner, deadline, completion state, event, task, or source
 - do not claim work is complete without supplied evidence
 - recommendations are proposals, not organizational facts
+- reviewed_intake contains VP-approved evidence; surface conflicts with current
+  state rather than silently choosing one source
 - copy owner IDs, deadlines, and evidence IDs exactly when available
 - leave owner or deadline null when context does not establish one
 - evidence references must identify sources present in the context

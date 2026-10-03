@@ -10,6 +10,8 @@ from colorstack_ai.extraction.context import ContextBuilder as ExtractionContext
 from colorstack_ai.extraction.ollama import OllamaClient
 from colorstack_ai.extraction.processor import ExtractionProcessor
 from colorstack_ai.extraction.repository import ExtractionRepository
+from colorstack_ai.intake.processor import IntakeProcessor
+from colorstack_ai.intake.repository import IntakeRepository
 from colorstack_ai.playbooks.evaluator import EventEvaluator
 from colorstack_ai.playbooks.loader import PlaybookLoader
 from colorstack_ai.playbooks.repository import PlaybookRepository
@@ -170,6 +172,10 @@ def create_pipeline(
             timeout_seconds=extraction.ollama_timeout_seconds,
         ) as ollama:
             await ollama.validate()
+            await IntakeProcessor(
+                IntakeRepository(database),
+                ollama,
+            ).process_pending(limit=settings.batch_size)
             processor = ExtractionProcessor(
                 repository=extraction_repository,
                 context_builder=extraction_context,

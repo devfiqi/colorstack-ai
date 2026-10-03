@@ -53,6 +53,9 @@ message archive as sensitive organizational data.
 - Keep the continuous intelligence pipeline advisory-only. Scheduled jobs may
   update local derived state and generate reviewable recommendations, but must
   not send messages or mutate external systems.
+- Keep raw VP Inbox submissions local. Only VP-approved, typed, bounded intake
+  facts may enter reasoning context; never send the original pasted source to a
+  cloud provider.
 
 ## Reporting a security issue
 

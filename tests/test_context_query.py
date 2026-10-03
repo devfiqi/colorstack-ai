@@ -17,6 +17,12 @@ from colorstack_ai.context.ranking import (
 
 
 class QueryParserTest(unittest.TestCase):
+    def test_vp_attention_query_is_organization_scope(self) -> None:
+        parsed = parse_query("What needs my attention today?")
+
+        self.assertEqual(parsed.scope, "organization")
+        self.assertFalse(parsed.ambiguous)
+
     def test_event_missing_requirements_query(self) -> None:
         parsed = parse_query(
             "What are we missing for the Adobe Ideathon?"

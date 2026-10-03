@@ -9,14 +9,28 @@ organizational context and proactive executive updates.
 Phases 1–8 and the Phase 10 local dashboard are implemented. Discord ingestion,
 PostgreSQL persistence, local extraction, organizational state, event
 playbooks, bounded context, cloud reasoning, and daily executive briefs feed a
-read-only FastAPI dashboard. The bot now runs extraction, state reconciliation,
-and playbook evaluation continuously after Discord backfill. Phase 9
-interactive AI is intentionally skipped.
+FastAPI dashboard. The bot now runs extraction, state reconciliation, and
+playbook evaluation continuously after Discord backfill. The VP Advisor adds a
+review-gated interactive workspace for questions and pasted source material.
 
 ColorStack AI is advisory-only: it may update its internal evidence-backed
 state and generate recommendations, but it never takes an external action on
 its own. Scheduled briefs are generated for review; sending a brief requires an
 explicit manual command.
+
+## VP Advisor and inbox
+
+The `/ask` workspace supports two related workflows:
+
+- Ask grounded questions such as “What needs my attention today?” The approved
+  reasoning provider receives only bounded structured context and VP-approved
+  intake facts, never raw pasted material or the full Discord archive.
+- Paste conversations, meeting notes, emails, transcripts, document text, or
+  general notes into the local VP Inbox. Ollama extracts proposed facts and the
+  VP must approve or reject each one before it can appear in advisor context.
+
+The first Phase 2 slice accepts pasted text. Native file parsing and Google
+Docs, Gmail, Calendar, or iMessage connectors remain later work.
 
 ## System direction
 
@@ -189,6 +203,7 @@ LIMIT 10;
 - [Phase 5 event playbooks](docs/phase-5.md)
 - [Phase 6 retrieval and context](docs/phase-6.md)
 - [Phase 10 local dashboard](docs/phase-10.md)
+- [VP Phase 2 interactive workspace](docs/vp-phase-2.md)
 - [Playbook format](docs/playbook-format.md)
 - [Data model](docs/data-model.md)
 - [Technical decisions](docs/decisions.md)

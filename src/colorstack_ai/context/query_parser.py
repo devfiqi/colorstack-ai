@@ -68,6 +68,10 @@ def parse_query(query: str) -> QueryInterpretation:
             "overall status",
             "what should we discuss",
             "what should we focus",
+            "what should i do",
+            "what needs my attention",
+            "what am i missing",
+            "what do i need to do",
         )
     ):
         return QueryInterpretation(

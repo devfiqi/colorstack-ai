@@ -221,3 +221,4 @@ class StructuredContextPackage(BaseModel):
         EventContext | TaskContext | PersonContext | OrganizationContext | None
     ) = None
     warnings: list[str] = Field(default_factory=list)
+    reviewed_intake: list[FactContextItem] = Field(default_factory=list)

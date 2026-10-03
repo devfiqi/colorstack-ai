@@ -125,6 +125,71 @@ export interface SystemStatus {
   automaticActions: boolean;
 }
 
+export type IntakeSourceType =
+  "conversation" | "meeting_notes" | "email" | "document" | "transcript" | "general_note";
+export type IntakeStatus = "pending" | "processing" | "processed" | "failed";
+export type ProposalStatus = "pending" | "approved" | "rejected";
+
+export interface IntakeFact {
+  type: string;
+  event_name: string | null;
+  task: string | null;
+  owner_name: string | null;
+  deadline_text: string | null;
+  normalized_deadline: string | null;
+  status: string | null;
+  value: string | null;
+  confidence: number;
+  evidence_kind: string;
+}
+
+export interface IntakeProposal {
+  id: string;
+  ordinal: number;
+  fact: IntakeFact;
+  status: ProposalStatus;
+  reviewer_note: string | null;
+  reviewed_at: string | null;
+}
+
+export interface IntakeSourceSummary {
+  id: string;
+  title: string;
+  source_type: IntakeSourceType;
+  status: IntakeStatus;
+  created_at: string;
+  proposal_count: number;
+  pending_count: number;
+}
+
+export interface IntakeSource extends IntakeSourceSummary {
+  content: string;
+  occurred_at: string | null;
+  error: string | null;
+  updated_at: string;
+  proposals: IntakeProposal[];
+}
+
+export interface AdvisorAnswer {
+  request_id: string | null;
+  answer: {
+    summary: string;
+    priorities: Array<{
+      title: string;
+      reason: string;
+      owner_name: string | null;
+      urgency: Urgency;
+      deadline: string | null;
+    }>;
+    risks: Array<{ title: string; reason: string; urgency: Urgency }>;
+    blockers: string[];
+    discussion_topics: string[];
+    uncertainty: string[];
+  } | null;
+  warnings: string[];
+  reviewed_intake_count: number;
+}
+
 const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:8000").replace(/\/$/, "");
 
 async function request<T>(path: string): Promise<T> {
@@ -143,6 +208,33 @@ export const fetchPeople = () => request<Person[]>("/api/people");
 export const fetchActivity = () => request<ActivityRecord[]>("/api/activity");
 export const fetchPlaybooks = () => request<Playbook[]>("/api/playbooks");
 export const fetchSystem = () => request<SystemStatus>("/api/system");
+export const fetchIntakeSources = () => request<IntakeSourceSummary[]>("/api/intake/sources");
+export const fetchIntakeSource = (id: string) => request<IntakeSource>(`/api/intake/sources/${id}`);
+
+async function mutate<T>(path: string, method: "POST" | "PATCH", body?: object): Promise<T> {
+  const response = await fetch(`${API_URL}${path}`, {
+    method,
+    headers: { Accept: "application/json", "Content-Type": "application/json" },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as { detail?: string } | null;
+    throw new Error(payload?.detail || `API request failed (${response.status}): ${path}`);
+  }
+  return response.json() as Promise<T>;
+}
+
+export const createIntakeSource = (input: {
+  title: string;
+  source_type: IntakeSourceType;
+  content: string;
+}) => mutate<IntakeSource>("/api/intake/sources", "POST", input);
+export const retryIntakeSource = (id: string) =>
+  mutate<IntakeSource>(`/api/intake/sources/${id}/retry`, "POST");
+export const reviewIntakeProposal = (id: string, status: "approved" | "rejected") =>
+  mutate<IntakeProposal>(`/api/intake/proposals/${id}`, "PATCH", { status });
+export const askAdvisor = (question: string) =>
+  mutate<AdvisorAnswer>("/api/advisor/questions", "POST", { question });
 
 interface BriefApiResponse {
   generated: string;

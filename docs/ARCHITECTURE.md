@@ -89,6 +89,11 @@ React dashboard                  implemented locally
 - `pipeline/` continuously runs local extraction, state reconciliation, and
   event-playbook evaluation after Discord backfill. Stage failures are isolated
   and every cycle records health for the dashboard.
+- `intake/` stores manually submitted VP source text locally, extracts proposed
+  facts through Ollama, and exposes an explicit approval/rejection workflow.
+- `advisor/` answers VP questions from bounded Phase 6 context plus relevant,
+  approved intake facts. Raw inbox content is never sent to the reasoning
+  provider.
 - `api/` maps existing context and persistence services to read-only dashboard
   endpoints without duplicating state or playbook logic.
 - `frontend/` contains the imported React/TanStack Router dashboard, now backed
@@ -179,7 +184,23 @@ search implementation later without changing context models.
 
 ## Dashboard boundary
 
-Phase 10 is a read-only local projection. FastAPI binds to loopback by default,
+The operations dashboard is primarily a local projection. FastAPI binds to
+loopback by default,
 allows only configured local development origins, and exposes overview, event,
 task, person, activity, brief, playbook, and system-health data. It does not
-write organizational state or implement interactive AI.
+write reconciled organizational state. The VP Inbox is the narrow exception:
+it accepts local source text and review decisions, while the advisor endpoint
+performs bounded reasoning without external actions.
+
+## VP intake boundary
+
+Intake sources and raw local-model output remain in PostgreSQL. Ollama converts
+each pending source into typed fact proposals, but proposals begin as pending
+and are excluded from advisor context. Approval makes only the structured fact
+eligible for bounded advisor reasoning; rejection preserves the audit record
+without using it. Approval does not directly mutate current event or task state.
+
+For event-, task-, or person-specific questions, reviewed intake is filtered by
+the resolved entity text before it can enter the reasoning payload. Organization
+questions may include a bounded set of recent approved facts. Raw source content
+is never included in cloud reasoning requests.

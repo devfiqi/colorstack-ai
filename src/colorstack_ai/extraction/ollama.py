@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 from typing import Any
 
 import httpx
@@ -9,6 +10,10 @@ from colorstack_ai.extraction.models import (
     ExtractionResponse,
 )
 from colorstack_ai.extraction.prompt import SYSTEM_PROMPT, build_user_prompt
+from colorstack_ai.intake.prompt import (
+    SYSTEM_PROMPT as INTAKE_SYSTEM_PROMPT,
+    build_user_prompt as build_intake_prompt,
+)
 
 
 class OllamaError(RuntimeError):
@@ -63,6 +68,37 @@ class OllamaClient:
         self,
         context: ExtractionContext,
     ) -> tuple[ExtractionResponse, dict[str, Any]]:
+        return await self._extract_structured(
+            system_prompt=SYSTEM_PROMPT,
+            user_prompt=build_user_prompt(context),
+        )
+
+    async def extract_intake(
+        self,
+        *,
+        source_id: str,
+        source_type: str,
+        title: str,
+        content: str,
+        occurred_at: datetime | None,
+    ) -> tuple[ExtractionResponse, dict[str, Any]]:
+        return await self._extract_structured(
+            system_prompt=INTAKE_SYSTEM_PROMPT,
+            user_prompt=build_intake_prompt(
+                source_id=source_id,
+                source_type=source_type,
+                title=title,
+                content=content,
+                occurred_at=occurred_at,
+            ),
+        )
+
+    async def _extract_structured(
+        self,
+        *,
+        system_prompt: str,
+        user_prompt: str,
+    ) -> tuple[ExtractionResponse, dict[str, Any]]:
         try:
             response = await self._client.post(
                 "/api/chat",
@@ -71,11 +107,8 @@ class OllamaClient:
                     "stream": False,
                     "format": ExtractionResponse.model_json_schema(),
                     "messages": [
-                        {"role": "system", "content": SYSTEM_PROMPT},
-                        {
-                            "role": "user",
-                            "content": build_user_prompt(context),
-                        },
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt},
                     ],
                     "options": {"temperature": 0},
                 },

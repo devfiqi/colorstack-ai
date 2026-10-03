@@ -6,7 +6,9 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from colorstack_ai.api.routes.advisor import router as advisor_router
 from colorstack_ai.api.routes.dashboard import router as dashboard_router
+from colorstack_ai.api.routes.intake import router as intake_router
 from colorstack_ai.api.routes.system import router as system_router
 from colorstack_ai.config import load_database_environment
 from colorstack_ai.db.session import Database
@@ -45,10 +47,12 @@ def create_app(database: Database | None = None) -> FastAPI:
         CORSMiddleware,
         allow_origins=origins,
         allow_credentials=False,
-        allow_methods=["GET"],
+        allow_methods=["GET", "POST", "PATCH"],
         allow_headers=["*"],
     )
     app.include_router(dashboard_router)
+    app.include_router(intake_router)
+    app.include_router(advisor_router)
     app.include_router(system_router)
     return app
 

@@ -140,9 +140,22 @@ Status: implemented; production channel verification remains operational.
 
 ## Phase 9 — Interactive AI
 
-Status: intentionally skipped.
+Status: initial VP Advisor slice implemented.
 
-No `/ask`, bot mentions, or dashboard Q&A is enabled.
+- `/ask` provides bounded, source-aware VP questions.
+- The local VP Inbox accepts pasted source text.
+- Ollama extracts reviewable proposals from submitted material.
+- Explicit approval or rejection gates use in advisor reasoning.
+- Raw pasted material remains local and is never sent to the cloud reasoning
+  provider.
+
+Deferred improvements:
+
+- Native PDF, DOCX, and Google Docs ingestion.
+- Temporary context that is not retained.
+- Multi-turn conversation history.
+- Reconciliation of approved intake into organizational state with generalized
+  non-Discord provenance.
 
 ## Phase 10 — Local operations dashboard
 

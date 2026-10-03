@@ -215,3 +215,20 @@ allowing repeated manual previews and sends.
 Phase 10 adds no database tables. FastAPI returns typed, read-only projections
 over existing event, task, state, playbook, reasoning, and briefing records.
 The frontend stores no independent organizational truth.
+
+## VP intake workspace
+
+### `intake_sources`
+
+Stores locally submitted source text with a title, source type, optional source
+timestamp, processing state, local-model output, and sanitized extraction error.
+Supported source types cover conversations, meeting notes, email, documents,
+transcripts, and general notes.
+
+### `intake_proposals`
+
+Stores typed fact proposals extracted from an intake source. Every proposal
+begins pending and records an explicit approved or rejected review state,
+optional reviewer note, and review timestamp. Approved proposals can be added
+to bounded advisor context; they do not directly update reconciled event or task
+state.
