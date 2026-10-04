@@ -135,8 +135,8 @@ python -m colorstack_ai.state reconcile-new
 ```
 
 For urgent operating work, run a smaller event-priority pass first. It limits
-candidate messages to the confirmed Gen AI, SIBAT, Ideathon, and NSBE terms
-while preserving local reply and nearby-message context:
+candidate messages to the confirmed Gen AI, Seagate, SIBAT, Ideathon, and NSBE
+terms while preserving local reply and nearby-message context:
 
 ```bash
 EXTRACTION_VERSION=v4 python -m colorstack_ai.extract backfill \

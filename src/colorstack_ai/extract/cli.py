@@ -13,7 +13,7 @@ from colorstack_ai.extraction.repository import ExtractionRepository
 
 EVENT_PRIORITY_PATTERN = (
     r"gen.?ai|generative ai|sibat|imposter|ideathon|hackathon|olympics|"
-    r"nsbe|shark tank"
+    r"nsbe|shark tank|seagate|recruiting 101"
 )
 
 
