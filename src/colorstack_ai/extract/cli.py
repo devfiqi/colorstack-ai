@@ -11,6 +11,12 @@ from colorstack_ai.extraction.processor import ExtractionProcessor
 from colorstack_ai.extraction.repository import ExtractionRepository
 
 
+EVENT_PRIORITY_PATTERN = (
+    r"gen.?ai|generative ai|sibat|imposter|ideathon|hackathon|olympics|"
+    r"nsbe|shark tank"
+)
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Extract organizational facts from raw Discord messages.",
@@ -38,6 +44,14 @@ def parse_args() -> argparse.Namespace:
         "--to-date",
         type=date.fromisoformat,
         help="Inclusive local calendar date (YYYY-MM-DD) for a bounded reprocess.",
+    )
+    parser.add_argument(
+        "--event-priority",
+        action="store_true",
+        help=(
+            "Restrict processing to the confirmed Gen AI, SIBAT, Ideathon, "
+            "and NSBE event terms while preserving each message's local context."
+        ),
     )
     args = parser.parse_args()
     if args.limit is not None and args.limit <= 0:
@@ -87,6 +101,7 @@ async def main(args: argparse.Namespace) -> None:
                     if args.to_date
                     else None
                 ),
+                content_pattern=(EVENT_PRIORITY_PATTERN if args.event_priority else None),
             )
     finally:
         await database.close()

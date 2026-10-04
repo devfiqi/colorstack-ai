@@ -66,6 +66,7 @@ class ExtractionProcessor:
         limit: int | None,
         start_at: datetime | None = None,
         end_at: datetime | None = None,
+        content_pattern: str | None = None,
     ) -> ExtractionSummary:
         run_id = await self._repository.create_run(
             model_name=self._extractor.model,
@@ -85,6 +86,7 @@ class ExtractionProcessor:
                 limit=limit,
                 start_at=start_at,
                 end_at=end_at,
+                content_pattern=content_pattern,
             )
             summary.scanned = len(candidate_ids)
             logger.info("Scanning %d candidate messages", summary.scanned)
