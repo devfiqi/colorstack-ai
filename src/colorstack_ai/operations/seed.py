@@ -30,6 +30,12 @@ CONFIRMED_EVENTS = (
         ("GenAI with Google", "Gen AI Workflow", "AI Workflow", "GenAI"),
     ),
     ConfirmedEvent(
+        "Seagate Recruiting Panel",
+        datetime(2026, 10, 13, 5, tzinfo=UTC),
+        "career_panel",
+        ("Seagate Recruiting 101", "Seagate panel", "Recruiting 101"),
+    ),
+    ConfirmedEvent(
         "SIBAT x ColorStack: Find the Imposter",
         datetime(2026, 10, 14, 5, tzinfo=UTC),
         "social",
