@@ -2,7 +2,7 @@
 
 Your personal AI assistant for handling ColorStack tasks.
 
-Currently Inactive
+### Currently Inactive
 
 ## Overview
 
