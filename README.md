@@ -2,6 +2,8 @@
 
 Your personal AI assistant for handling ColorStack tasks.
 
+Currently Inactive
+
 ## Overview
 
 ColorStack AI turns activity from the University of Minnesota ColorStack
